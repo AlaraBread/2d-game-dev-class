@@ -9,12 +9,12 @@
 
 typedef struct Sprite_S
 {
-    int ref_count;
-    TextLine filepath;
-    SDL_Texture *texture;
-    SDL_Surface *surface;
-    Uint32 frames_per_line;
-    Uint32 frame_w,frame_h;
+	int ref_count;
+	TextLine filepath;
+	SDL_Texture *texture;
+	SDL_Surface *surface;
+	Uint32 frames_per_line;
+	Uint32 frame_w,frame_h;
 }Sprite;
 
 /**
@@ -46,11 +46,11 @@ void gf2d_sprite_draw_image(Sprite *image,Vector2D position);
  * @param keepSurface if you plan on doing surface editing with this sprite, set to true otherwise the surface data is cleaned up
  */
 Sprite *gf2d_sprite_load_all(
-    const char *filename,
-    Sint32 frameWidth,
-    Sint32 frameHeigh,
-    Sint32 framesPerLine,
-    Bool    keepSurface
+	const char *filename,
+	Sint32 frameWidth,
+	Sint32 frameHeigh,
+	Sint32 framesPerLine,
+	Bool    keepSurface
 );
 
 /**
@@ -67,15 +67,15 @@ Sprite *gf2d_sprite_load_all(
  * @param frame which frame to draw
  */
 void gf2d_sprite_render(
-    Sprite * sprite,
-    Vector2D position,
-    Vector2D * scale,
-    Vector2D * center,
-    float    * rotation,
-    Vector2D * flip,
-    Color    * color,
-    Vector4D * clip,
-    Uint32 frame);
+	Sprite * sprite,
+	Vector2D position,
+	Vector2D * scale,
+	Vector2D * center,
+	float    * rotation,
+	Vector2D * flip,
+	Color    * color,
+	Vector4D * clip,
+	Uint32 frame);
 
 /**
  * @brief draw a sprite to the screen
@@ -89,14 +89,14 @@ void gf2d_sprite_render(
  * @param frame which frame to draw
  */
 void gf2d_sprite_draw(
-    Sprite * sprite,
-    Vector2D position,
-    Vector2D * scale,
-    Vector2D * center,
-    float    * rotation,
-    Vector2D * flip,
-    Color    * colorShift,
-    Uint32 frame);
+	Sprite * sprite,
+	Vector2D position,
+	Vector2D * scale,
+	Vector2D * center,
+	float    * rotation,
+	Vector2D * flip,
+	Color    * colorShift,
+	Uint32 frame);
 
 /**
  * @brief free a sprite back to the sprite manager
@@ -128,12 +128,12 @@ void gf2d_sprite_clear_all();
  * @param surface the surface to draw to
  */
 void gf2d_sprite_draw_to_surface(
-    Sprite *sprite,
-    Vector2D position,
-    Vector2D * scale,
-    Vector2D * scaleCenter,
-    Uint32 frame,
-    SDL_Surface *surface
+	Sprite *sprite,
+	Vector2D position,
+	Vector2D * scale,
+	Vector2D * scaleCenter,
+	Uint32 frame,
+	SDL_Surface *surface
 );
 
 /**

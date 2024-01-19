@@ -17,13 +17,13 @@
  * @param fullscreen if you want the window to render full screen or not
  */
 void gf2d_graphics_initialize(
-    char *windowName,
-    int viewWidth,
-    int viewHeight,
-    int renderWidth,
-    int renderHeight,
-    Vector4D bgcolor,
-    Bool fullscreen
+	char *windowName,
+	int viewWidth,
+	int viewHeight,
+	int renderWidth,
+	int renderHeight,
+	Vector4D bgcolor,
+	Bool fullscreen
 );
 
 /**
