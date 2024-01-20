@@ -37,14 +37,16 @@ int main(int argc, char * argv[])
 	mouse = gf2d_sprite_load_all("images/pointer.png",32,32,16,0);
 
 	// physics setup
-	PhysicsWorld physics_world = init_physics(20);
+	PhysicsWorld physics_world = init_physics(30);
 	create_test_world(&physics_world);
 	PhysicsBody *cursor_trigger = allocate_physics_body(&physics_world);
 	cursor_trigger->shape_type = CIRCLE;
-	cursor_trigger->shape.circle.radius = 50;
+	cursor_trigger->shape.circle.radius = 50.0;
 	cursor_trigger->physics_type = RIGID;
-	cursor_trigger->mass = 1.0;
-	cursor_trigger->moment_of_inertia = 10.0;
+	cursor_trigger->mass = cursor_trigger->shape.circle.radius*cursor_trigger->shape.circle.radius;
+	cursor_trigger->moment_of_inertia = cursor_trigger->mass*2.0;
+	cursor_trigger->physics_material.friction = 1.0;
+	cursor_trigger->physics_material.bounce = 0.6;
 
 	/*main game loop*/
 	while(!done)
@@ -56,7 +58,7 @@ int main(int argc, char * argv[])
 		int old_mx = mx;
 		int old_my = my;
 
-		SDL_GetMouseState(&mx,&my);
+		Uint32 mouse_buttons = SDL_GetMouseState(&mx,&my);
 		mf+=0.1;
 		if (mf >= 16.0)mf = 0;
 		
@@ -76,9 +78,11 @@ int main(int argc, char * argv[])
 				&mouseColor,
 				(int)mf);
 
-		cursor_trigger->position = vector2d(mx, my);
-		cursor_trigger->linear_velocity = vector2d((mx-old_mx)/0.016, (my-old_my)/0.016);
-		//cursor_trigger->angular_velocity = 0.0;
+		if(mouse_buttons&1) {
+			cursor_trigger->position = vector2d(mx, my);
+			cursor_trigger->linear_velocity = vector2d((mx-old_mx)/0.016, (my-old_my)/0.016);
+			//cursor_trigger->angular_velocity = 0.0;
+		}
 
 		physics_step(&physics_world, 0.016);
 

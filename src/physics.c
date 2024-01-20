@@ -153,53 +153,56 @@ void solve_collision(PhysicsBody *a, PhysicsBody *b, float delta) {
 		default:
 			break;
 	}
-	if(col.hit) {
-		if(a->physics_type != RIGID && b->physics_type != RIGID) {
-			return;
-		}
-		if(a->physics_type == TRIGGER || b->physics_type == TRIGGER) {
-			return;
-		}
-		Vector2D recovery_vector;
-		vector2d_scale(recovery_vector, col.normal, col.distance/((a->physics_type == RIGID) + (b->physics_type == RIGID)));
-		if(a->physics_type == RIGID) {
-			vector2d_add(a->position, a->position, recovery_vector);
-		}
-		if(b->physics_type == RIGID) {
-			vector2d_sub(b->position, b->position, recovery_vector);
-		}
-		Vector2D a_v = velocity_at_point(a, col.position);
-		Vector2D b_v = velocity_at_point(b, col.position);
 
-		Vector2D delta_v;
-		vector2d_sub(delta_v, b_v, a_v);
-
-		Vector2D a_impulse;
-		Vector2D b_impulse;
-		float d = vector2d_dot_product(delta_v, col.normal);
-		vector2d_scale(a_impulse, col.normal, a->physics_material.bounce*d*(b->mass/a->mass));
-		vector2d_scale(b_impulse, col.normal, -b->physics_material.bounce*d*(a->mass/b->mass));
-
-		Vector2D friction = vector2d_slide(delta_v, col.normal);
-
-		float f = 1.0;//a->physics_material.friction*b->physics_material.friction;
-
-		vector2d_scale(friction, friction, f);
-
-		vector2d_add(a_impulse, a_impulse, friction);
-		vector2d_scale(friction, friction, -1.0);
-		vector2d_add(b_impulse, b_impulse, friction);
-
-		if(a->physics_type == RIGID) {
-			a->linear_velocity = vector2d_slide(a->linear_velocity, col.normal);
-		}
-		if(b->physics_type == RIGID) {
-			b->linear_velocity = vector2d_slide(b->linear_velocity, col.normal);
-		}
-
-		apply_impulse(a, a_impulse, col.position);
-		apply_impulse(b, b_impulse, col.position);
+	if(!col.hit) {
+		return;
 	}
+	if(a->physics_type != RIGID && b->physics_type != RIGID) {
+		return;
+	}
+	if(a->physics_type == TRIGGER || b->physics_type == TRIGGER) {
+		return;
+	}
+	Vector2D recovery_vector;
+	vector2d_scale(recovery_vector, col.normal, col.distance/((a->physics_type == RIGID) + (b->physics_type == RIGID)));
+	if(a->physics_type == RIGID) {
+		vector2d_add(a->position, a->position, recovery_vector);
+	}
+	if(b->physics_type == RIGID) {
+		vector2d_sub(b->position, b->position, recovery_vector);
+	}
+	Vector2D a_v = velocity_at_point(a, col.position);
+	Vector2D b_v = velocity_at_point(b, col.position);
+
+	Vector2D delta_v;
+	vector2d_sub(delta_v, b_v, a_v);
+
+	Vector2D a_impulse;
+	Vector2D b_impulse;
+	float a_s = vector2d_dot_product(a_v, col.normal);
+	float b_s = vector2d_dot_product(b_v, col.normal);
+	vector2d_scale(a_impulse, col.normal, -a->physics_material.bounce*(a->mass*a->mass*a_s-b->mass*(a_s-2.0*b_s))/(a->mass+b->mass));
+	vector2d_scale(b_impulse, col.normal, b->physics_material.bounce*(b->mass*b->mass*b_s-a->mass*(b_s-2.0*a_s))/(a->mass+b->mass));
+
+	Vector2D friction = vector2d_slide(delta_v, col.normal);
+
+	float f = a->physics_material.friction*b->physics_material.friction;
+
+	vector2d_scale(friction, friction, f);
+
+	vector2d_add(a_impulse, a_impulse, friction);
+	vector2d_scale(friction, friction, -1.0);
+	vector2d_add(b_impulse, b_impulse, friction);
+
+	if(a->physics_type == RIGID) {
+		a->linear_velocity = vector2d_slide(a->linear_velocity, col.normal);
+	}
+	if(b->physics_type == RIGID) {
+		b->linear_velocity = vector2d_slide(b->linear_velocity, col.normal);
+	}
+
+	apply_impulse(a, a_impulse, col.position);
+	apply_impulse(b, b_impulse, col.position);
 }
 
 void apply_gravity(PhysicsBody *body, float delta) {
@@ -215,7 +218,7 @@ void apply_damping(PhysicsBody *body, float delta) {
 	}
 	// linear_velocity -= linear_velocity*delta*damping
 	Vector2D linear_damping;
-	vector2d_scale(linear_damping, body->linear_velocity, delta*1.0);
+	vector2d_scale(linear_damping, body->linear_velocity, delta*0.01);
 	vector2d_sub(body->linear_velocity, body->linear_velocity, linear_damping);
 
 	float angular_damping = body->angular_velocity*delta*0.0;
@@ -273,15 +276,15 @@ void physics_step(PhysicsWorld *world, float delta) {
 			continue;
 		}
 		apply_world_bounds(body);
+		apply_damping(body, delta);
+		apply_gravity(body, delta);
+		integrate(body, delta);
 		for(int j = 0; j < world->max_physics_bodies; j++) {
 			if(!world->physics_bodies[j].inuse || j == i) {
 				continue;
 			}
 			solve_collision(body, &world->physics_bodies[j], delta);
 		}
-		apply_damping(body, delta);
-		apply_gravity(body, delta);
-		integrate(body, delta);
 	}
 }
 
@@ -294,7 +297,8 @@ void draw_sprites(PhysicsWorld *world) {
 		switch (body->shape_type) {
 			case CIRCLE:
 			{
-				gf2d_draw_circle(body->position, (int)body->shape.circle.radius, gfc_color(1.0, 0.0, 1.0, 1.0));
+				Color color = body->shape.circle.radius == 50.0?gfc_color(1.0, 0.0, 1.0, 1.0):gfc_color(1.0, 1.0, 1.0, 1.0);
+				gf2d_draw_circle(body->position, (int)body->shape.circle.radius, color);
 
 				Vector2D start = vector2d_rotate(vector2d(body->shape.circle.radius, 0.0), body->rotation);
 				Vector2D end;
@@ -303,7 +307,7 @@ void draw_sprites(PhysicsWorld *world) {
 				vector2d_add(start, start, body->position);
 				vector2d_add(end, end, body->position);
 
-				gf2d_draw_line(start, end, gfc_color(1.0, 0.0, 1.0, 1.0));
+				gf2d_draw_line(start, end, color);
 				break;
 			}
 			case PLANE:
@@ -340,11 +344,12 @@ void draw_sprites(PhysicsWorld *world) {
 void create_test_world(PhysicsWorld *world) {
 	PhysicsBody *floor = allocate_physics_body(world);
 	floor->physics_type = STATIC;
-	floor->position = vector2d(500.0, 700.0);
+	floor->position = vector2d(500.0, 500.0);
 	floor->shape_type = PLANE;
-	floor->shape.plane.normal = vector2d(0.0, -1.0);
+	floor->shape.plane.normal = vector2d(0.2, -1.0);
+	vector2d_normalize(&floor->shape.plane.normal);
 	floor->linear_velocity = vector2d(0.0, 0.0);
-	floor->mass = 1.0;
+	floor->mass = 10.0;
 	floor->moment_of_inertia = 1.0;
 	floor->physics_material.friction = 1.0;
 
@@ -354,7 +359,7 @@ void create_test_world(PhysicsWorld *world) {
 	floor->shape_type = PLANE;
 	floor->shape.plane.normal = vector2d(0.0, 1.0);
 	floor->linear_velocity = vector2d(0.0, 0.0);
-	floor->mass = 1.0;
+	floor->mass = 10.0;
 	floor->moment_of_inertia = 1.0;
 	floor->physics_material.friction = 1.0;
 
@@ -364,7 +369,7 @@ void create_test_world(PhysicsWorld *world) {
 	floor->shape_type = PLANE;
 	floor->shape.plane.normal = vector2d(1.0, 0.0);
 	floor->linear_velocity = vector2d(0.0, 0.0);
-	floor->mass = 1.0;
+	floor->mass = 10.0;
 	floor->moment_of_inertia = 1.0;
 	floor->physics_material.friction = 1.0;
 
@@ -374,22 +379,22 @@ void create_test_world(PhysicsWorld *world) {
 	floor->shape_type = PLANE;
 	floor->shape.plane.normal = vector2d(-1.0, 0.0);
 	floor->linear_velocity = vector2d(0.0, 0.0);
-	floor->mass = 1.0;
+	floor->mass = 10.0;
 	floor->moment_of_inertia = 1.0;
 	floor->physics_material.friction = 1.0;
 
 	PhysicsBody *ball;
 
-	for(int i = 0; i < 10; i++) {
+	for(int i = 0; i < 20; i++) {
 		ball = allocate_physics_body(world);
 		ball->physics_type = RIGID;
 		ball->position = vector2d(crand()*200.0+300.0, crand()*200.0+300.0);
 		ball->shape_type = CIRCLE;
-		ball->shape.circle.radius = 10.0;
+		ball->shape.circle.radius = randf()*30+10.0;
 		ball->linear_velocity = vector2d(crand()*1.0, crand()*1.0);
-		ball->mass = 1.0;
-		ball->moment_of_inertia = 1.0;
+		ball->mass = ball->shape.circle.radius*ball->shape.circle.radius*0.005;
+		ball->moment_of_inertia = ball->mass*2.0;
 		ball->physics_material.bounce = 0.6;
-		floor->physics_material.friction = 1.0;
+		ball->physics_material.friction = 1.0;
 	}
 }
