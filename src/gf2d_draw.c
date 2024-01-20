@@ -468,4 +468,9 @@ void gf2d_bezier4_draw(
 	gfc_list_delete(points);
 }
 
+void gf2d_draw_vector(Vector2D start, Vector2D end, Color color) {
+	gf2d_draw_line(start, end, color);
+	gf2d_draw_circle(end, 10, color);
+}
+
 /*eol@eof*/
