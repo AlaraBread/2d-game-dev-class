@@ -51,6 +51,7 @@ typedef struct PhysicsBody {
 	float angular_velocity;
 	float mass;
 	float moment_of_inertia;
+	Vector2D center_of_mass;
 	PhysicsType physics_type;
 	ShapeType shape_type;
 	ColliderShape shape;

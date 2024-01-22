@@ -40,13 +40,16 @@ int main(int argc, char * argv[])
 	PhysicsWorld physics_world = init_physics(30);
 	create_test_world(&physics_world);
 	PhysicsBody *cursor_trigger = allocate_physics_body(&physics_world);
-	cursor_trigger->shape_type = CIRCLE;
+	cursor_trigger->shape_type = CAPSULE;
 	cursor_trigger->shape.circle.radius = 50.0;
+	cursor_trigger->shape.capsule.height = 200.0;
 	cursor_trigger->physics_type = RIGID;
-	cursor_trigger->mass = cursor_trigger->shape.circle.radius*cursor_trigger->shape.circle.radius;
-	cursor_trigger->moment_of_inertia = cursor_trigger->mass*2.0;
+	cursor_trigger->mass = 100.0;
+	cursor_trigger->moment_of_inertia = 50000.0;
 	cursor_trigger->physics_material.friction = 1.0;
-	cursor_trigger->physics_material.bounce = 0.6;
+	cursor_trigger->physics_material.bounce = 0.0;
+	cursor_trigger->position = vector2d(100.0, 200.0);
+	cursor_trigger->center_of_mass = vector2d(0.0, 100.0);
 
 	/*main game loop*/
 	while(!done)
@@ -81,12 +84,11 @@ int main(int argc, char * argv[])
 		if(mouse_buttons&1) {
 			cursor_trigger->position = vector2d(mx, my);
 			cursor_trigger->linear_velocity = vector2d((mx-old_mx)/0.016, (my-old_my)/0.016);
-			//cursor_trigger->angular_velocity = 0.0;
+			cursor_trigger->angular_velocity = 0.0;
 		}
 
-		physics_step(&physics_world, 0.016);
-
 		draw_sprites(&physics_world);
+		physics_step(&physics_world, 0.016);
 
 		gf2d_graphics_next_frame();// render current draw frame and skip to the next frame
 		

@@ -469,9 +469,23 @@ void gf2d_bezier4_draw(
 }
 
 void gf2d_draw_vector(Vector2D vector, Vector2D origin, Color color) {
-	vector2d_add(vector, vector, origin);
-	gf2d_draw_line(origin, vector, color);
-	gf2d_draw_circle(vector, 10, color);
+	Vector2D end;
+	vector2d_add(end, vector, origin);
+	gf2d_draw_line(origin, end, color);
+	Vector2D arrow;
+	vector2d_scale(arrow, vector, -1.0);
+	arrow = vector2d_rotate(arrow, M_PI/4);
+	vector2d_normalize(&arrow);
+	vector2d_scale(arrow, arrow, 10.0);
+	Vector2D arrow_g;
+	vector2d_add(arrow_g, end, arrow);
+	gf2d_draw_line(arrow_g, end, color);
+	
+	arrow = vector2d_rotate(arrow, -M_PI/2);
+	vector2d_add(arrow_g, end, arrow);
+	gf2d_draw_line(arrow_g, end, color);
+	
+	//gf2d_draw_circle(vector, 10, color);
 }
 
 /*eol@eof*/
