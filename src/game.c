@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
 	Sprite *fastforward = gf2d_sprite_load_image("images/fastforward.png");
 
 	// physics setup
-	Rollback rollback_world = init_rollback(200, 20);
+	Rollback rollback_world = init_rollback(2000, 20);
 	PhysicsWorld *physics_world = rollback_cur_physics(&rollback_world);
 	PhysicsBody *cursor_trigger = allocate_physics_body(physics_world);
 	cursor_trigger->shape_type = CAPSULE;
