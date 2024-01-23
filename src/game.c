@@ -45,9 +45,10 @@ int main(int argc, char * argv[])
 	cursor_trigger->shape.capsule.height = 200.0;
 	cursor_trigger->physics_type = RIGID;
 	cursor_trigger->mass = 100.0;
-	cursor_trigger->moment_of_inertia = 50000.0;
+	float l = cursor_trigger->shape.capsule.height+cursor_trigger->shape.capsule.radius*2.0;
+	cursor_trigger->moment_of_inertia = cursor_trigger->mass*l*l/3.0;
 	cursor_trigger->physics_material.friction = 1.0;
-	cursor_trigger->physics_material.bounce = 0.0;
+	cursor_trigger->physics_material.bounce = 1.0;
 	cursor_trigger->position = vector2d(100.0, 200.0);
 	cursor_trigger->center_of_mass = vector2d(0.0, 100.0);
 
@@ -87,8 +88,8 @@ int main(int argc, char * argv[])
 			cursor_trigger->angular_velocity = 0.0;
 		}
 
-		draw_sprites(&physics_world);
 		physics_step(&physics_world, 0.016);
+		draw_sprites(&physics_world);
 
 		gf2d_graphics_next_frame();// render current draw frame and skip to the next frame
 		

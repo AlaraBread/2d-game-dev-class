@@ -185,7 +185,6 @@ Vector2D velocity_at_point(PhysicsBody *body, Vector2D point) {
 	Vector2D v = body->linear_velocity;
 	Vector2D diff;
 	vector2d_sub(diff, point, body->position);
-	//float dist = vector2d_magnitude(diff);
 	Vector2D angular_component = vector2d_rotate(diff, M_PI/2.0);
 	vector2d_scale(angular_component, angular_component, body->angular_velocity);
 	vector2d_add(v, v, angular_component);
@@ -402,7 +401,7 @@ void apply_righting(PhysicsBody *body, float delta) {
 	if(body->shape_type != CAPSULE) {
 		return;
 	}
-	body->angular_velocity -= delta*SDL_clamp(100.0*wrapMinMax(body->rotation, -M_PI, M_PI), -10.0, 10.0);
+	body->angular_velocity -= delta*SDL_clamp(30.0*wrapMinMax(body->rotation, -M_PI, M_PI), -5.0, 5.0);
 }
 
 PhysicsWorld init_physics(unsigned int max_physics_bodies) {
@@ -475,10 +474,6 @@ void draw_sprites(PhysicsWorld *world) {
 				vector2d_add(end, end, body->position);
 
 				gf2d_draw_line(start, end, color);
-
-				Vector2D v;
-				vector2d_scale(v, body->linear_velocity, 0.1);
-				gf2d_draw_vector(v, body->position, gfc_color(1.0, 1.0, 0.0, 1.0));
 				break;
 			}
 			case PLANE:
@@ -540,62 +535,65 @@ void draw_sprites(PhysicsWorld *world) {
 }
 
 void create_test_world(PhysicsWorld *world) {
+	float f = 0.7;
+	float b = 0.8;
+
 	PhysicsBody *floor = allocate_physics_body(world);
 	floor->physics_type = STATIC;
-	floor->position = vector2d(500.0, 500.0);
+	floor->position = vector2d(500.0, 720.0-50.0);
 	floor->shape_type = PLANE;
-	floor->shape.plane.normal = vector2d(0.2, -1.0);
+	floor->shape.plane.normal = vector2d(0.0, -1.0);
 	vector2d_normalize(&floor->shape.plane.normal);
 	floor->linear_velocity = vector2d(0.0, 0.0);
 	floor->mass = INFINITY;
 	floor->moment_of_inertia = INFINITY;
-	floor->physics_material.friction = 1.0;
-	floor->physics_material.bounce = 1.0;
+	floor->physics_material.friction = b;
+	floor->physics_material.bounce = f;
 
 	floor = allocate_physics_body(world);
 	floor->physics_type = STATIC;
-	floor->position = vector2d(500.0, 100.0);
+	floor->position = vector2d(500.0, 50.0);
 	floor->shape_type = PLANE;
 	floor->shape.plane.normal = vector2d(0.0, 1.0);
 	floor->linear_velocity = vector2d(0.0, 0.0);
 	floor->mass = INFINITY;
 	floor->moment_of_inertia = INFINITY;
-	floor->physics_material.friction = 1.0;
-	floor->physics_material.bounce = 1.0;
+	floor->physics_material.friction = f;
+	floor->physics_material.bounce = b;
 
 	floor = allocate_physics_body(world);
 	floor->physics_type = STATIC;
-	floor->position = vector2d(100.0, 700.0);
+	floor->position = vector2d(50.0, 700.0);
 	floor->shape_type = PLANE;
 	floor->shape.plane.normal = vector2d(1.0, 0.0);
 	floor->linear_velocity = vector2d(0.0, 0.0);
 	floor->mass = INFINITY;
 	floor->moment_of_inertia = INFINITY;
-	floor->physics_material.friction = 1.0;
-	floor->physics_material.bounce = 1.0;
+	floor->physics_material.friction = f;
+	floor->physics_material.bounce = b;
 
 	floor = allocate_physics_body(world);
 	floor->physics_type = STATIC;
-	floor->position = vector2d(1100.0, 700.0);
+	floor->position = vector2d(1200.0-50.0, 700.0);
 	floor->shape_type = PLANE;
 	floor->shape.plane.normal = vector2d(-1.0, 0.0);
 	floor->linear_velocity = vector2d(0.0, 0.0);
 	floor->mass = INFINITY;
 	floor->moment_of_inertia = INFINITY;
-	floor->physics_material.friction = 1.0;
-	floor->physics_material.bounce = 1.0;
+	floor->physics_material.friction = f;
+	floor->physics_material.bounce = b;
 
 	PhysicsBody *ball;
 
-	for(int i = 0; i < 0; i++) {
+	for(int i = 0; i < 4; i++) {
 		ball = allocate_physics_body(world);
 		ball->physics_type = RIGID;
 		ball->position = vector2d(crand()*200.0+300.0, crand()*200.0+300.0);
 		ball->shape_type = CIRCLE;
 		ball->shape.circle.radius = 40.0;
 		ball->mass = 100.0;
-		ball->moment_of_inertia = 100.0;
-		ball->physics_material.bounce = 0.9;
+		ball->moment_of_inertia = 0.5*ball->mass*ball->shape.circle.radius*ball->shape.circle.radius;
+		ball->physics_material.bounce = 1.0;
 		ball->physics_material.friction = 1.0;
 	}
 }
