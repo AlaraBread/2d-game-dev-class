@@ -3,7 +3,7 @@
 
 #include "gf2d_graphics.h"
 #include "gf2d_sprite.h"
-#include <physics.h>
+#include <rollback.h>
 
 int main(int argc, char * argv[])
 {
@@ -36,10 +36,13 @@ int main(int argc, char * argv[])
 	sprite = gf2d_sprite_load_image("images/backgrounds/bg_flat.png");
 	mouse = gf2d_sprite_load_all("images/pointer.png",32,32,16,0);
 
+	Sprite *rewind = gf2d_sprite_load_image("images/rewind.png");
+	Sprite *fastforward = gf2d_sprite_load_image("images/fastforward.png");
+
 	// physics setup
-	PhysicsWorld physics_world = init_physics(30);
-	create_test_world(&physics_world);
-	PhysicsBody *cursor_trigger = allocate_physics_body(&physics_world);
+	Rollback rollback_world = init_rollback(200, 20);
+	PhysicsWorld *physics_world = rollback_cur_physics(&rollback_world);
+	PhysicsBody *cursor_trigger = allocate_physics_body(physics_world);
 	cursor_trigger->shape_type = CAPSULE;
 	cursor_trigger->shape.circle.radius = 50.0;
 	cursor_trigger->shape.capsule.height = 200.0;
@@ -51,6 +54,7 @@ int main(int argc, char * argv[])
 	cursor_trigger->physics_material.bounce = 1.0;
 	cursor_trigger->position = vector2d(100.0, 200.0);
 	cursor_trigger->center_of_mass = vector2d(0.0, 100.0);
+	create_test_world(physics_world);
 
 	/*main game loop*/
 	while(!done)
@@ -82,21 +86,35 @@ int main(int argc, char * argv[])
 				&mouseColor,
 				(int)mf);
 
+		physics_world = rollback_cur_physics(&rollback_world);
 		if(mouse_buttons&1) {
+			cursor_trigger = &physics_world->physics_bodies[0];
 			cursor_trigger->position = vector2d(mx, my);
 			cursor_trigger->linear_velocity = vector2d((mx-old_mx)/0.016, (my-old_my)/0.016);
 			cursor_trigger->angular_velocity = 0.0;
 		}
 
-		physics_step(&physics_world, 0.016);
-		draw_sprites(&physics_world);
+		if(mouse_buttons&4) {
+			physics_world = rollback_step_back(&rollback_world, 0.016);
+			gf2d_sprite_draw_image(rewind,vector2d(0,0));
+		} else {
+			if(mouse_buttons&2) {
+				// fast forward
+				rollback_step(&rollback_world, 0.016);
+				rollback_step(&rollback_world, 0.016);
+				rollback_step(&rollback_world, 0.016);
+				gf2d_sprite_draw_image(fastforward,vector2d(0,0));
+			}
+			physics_world = rollback_step(&rollback_world, 0.016);
+		}
+		draw_sprites(physics_world);
 
 		gf2d_graphics_next_frame();// render current draw frame and skip to the next frame
 		
 		if (keys[SDL_SCANCODE_ESCAPE])done = 1; // exit condition
 		//slog("Rendering at %f FPS",gf2d_graphics_get_frames_per_second());
 	}
-	free_physics(&physics_world);
+	free_rollback(&rollback_world);
 	slog("---==== END ====---");
 	return 0;
 }

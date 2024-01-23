@@ -404,10 +404,14 @@ void apply_righting(PhysicsBody *body, float delta) {
 	body->angular_velocity -= delta*SDL_clamp(30.0*wrapMinMax(body->rotation, -M_PI, M_PI), -5.0, 5.0);
 }
 
-PhysicsWorld init_physics(unsigned int max_physics_bodies) {
+PhysicsWorld init_physics(unsigned int max_physics_bodies, bool allocate) {
 	PhysicsWorld world;
 	world.max_physics_bodies = max_physics_bodies;
-	world.physics_bodies = calloc(sizeof(PhysicsBody), max_physics_bodies);
+	if(allocate) {
+		world.physics_bodies = calloc(sizeof(PhysicsBody), max_physics_bodies);
+	} else {
+		world.physics_bodies = NULL;
+	}
 	world.last_allocated_body = max_physics_bodies-1;
 	return world;
 }

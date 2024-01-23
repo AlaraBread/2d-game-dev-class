@@ -73,7 +73,7 @@ typedef struct PhysicsWorld {
 } PhysicsWorld;
 
 
-PhysicsWorld init_physics(unsigned int max_physics_bodies);
+PhysicsWorld init_physics(unsigned int max_physics_bodies, bool allocate);
 PhysicsBody *allocate_physics_body(PhysicsWorld *world);
 void free_physics(PhysicsWorld *world);
 void physics_step(PhysicsWorld *world, float delta);
