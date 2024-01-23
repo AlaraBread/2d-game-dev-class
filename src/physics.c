@@ -1,5 +1,5 @@
-#include <physics.h>
-#include <gf2d_draw.h>
+#include "gf2d_draw.h"
+#include "physics.h"
 
 #define randf() ((rand()&0xFFFF)/(float)0xFFFF)
 #define crand() (randf()*2.0-1.0)
