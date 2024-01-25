@@ -4,6 +4,7 @@
 #include "gf2d_graphics.h"
 #include "gf2d_sprite.h"
 #include "rollback.h"
+#include "audio.h"
 
 int main(int argc, char * argv[])
 {
@@ -31,6 +32,8 @@ int main(int argc, char * argv[])
 	gf2d_graphics_set_frame_delay(16);
 	gf2d_sprite_init(1024);
 	SDL_ShowCursor(SDL_DISABLE);
+
+	init_audio();
 	
 	/*demo setup*/
 	sprite = gf2d_sprite_load_image("images/backgrounds/bg_flat.png");
@@ -59,8 +62,6 @@ int main(int argc, char * argv[])
 	float jump_interval = 60.0/194.0;
 	float jump_velocity = 2000.0;
 	physics_world->gravity = jump_velocity/jump_interval; // hit the ground again after a certain interval
-
-	printf("%d\n\n", sizeof(PhysicsBody));
 
 	Uint32 old_mouse_buttons = 0;
 

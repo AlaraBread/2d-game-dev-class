@@ -1,11 +1,9 @@
-#include <gfc_vector.h>
-#include <gfc_types.h>
-#include <gf2d_sprite.h>
+#include "gfc_vector.h"
+#include "gfc_types.h"
+#include "gf2d_sprite.h"
 
 #ifndef __ALARA_PHYSICS__
 #define __ALARA_PHYSICS__
-
-#define bool Bool
 
 typedef struct CapsuleShape {
 	float radius;
