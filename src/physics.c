@@ -340,11 +340,11 @@ void solve_collision(PhysicsBody *a, PhysicsBody *b, float delta) {
 	apply_impulse(b, impulse, col.position);
 }
 
-void apply_gravity(PhysicsBody *body, float delta) {
+void apply_gravity(PhysicsWorld *world, PhysicsBody *body, float delta) {
 	if(body->physics_type != RIGID) {
 		return;
 	}
-	body->linear_velocity.y += 400.0*delta;
+	body->linear_velocity.y += world->gravity*delta;
 }
 
 void apply_damping(PhysicsBody *body, float delta) {
@@ -401,7 +401,7 @@ void apply_righting(PhysicsBody *body, float delta) {
 	if(body->shape_type != CAPSULE) {
 		return;
 	}
-	body->angular_velocity -= delta*SDL_clamp(30.0*wrapMinMax(body->rotation, -M_PI, M_PI), -5.0, 5.0);
+	body->angular_velocity -= delta*SDL_clamp(400.0*wrapMinMax(body->rotation, -M_PI, M_PI), -40.0, 40.0);
 }
 
 PhysicsWorld init_physics(unsigned int max_physics_bodies, bool allocate) {
@@ -413,6 +413,7 @@ PhysicsWorld init_physics(unsigned int max_physics_bodies, bool allocate) {
 		world.physics_bodies = NULL;
 	}
 	world.last_allocated_body = max_physics_bodies-1;
+	world.gravity = 400.0;
 	return world;
 }
 
@@ -435,6 +436,14 @@ PhysicsBody *allocate_physics_body(PhysicsWorld *world) {
 	return NULL;
 }
 
+int physics_get_body_id(PhysicsWorld *world, PhysicsBody *body) {
+	return body-world->physics_bodies;
+}
+
+PhysicsBody *get_body(PhysicsWorld *world, int id) {
+	return &world->physics_bodies[id];
+}
+
 void physics_step(PhysicsWorld *world, float delta) {
 	for(int i = 0; i < world->max_physics_bodies; i++) {
 		PhysicsBody *body = &world->physics_bodies[i];
@@ -444,7 +453,7 @@ void physics_step(PhysicsWorld *world, float delta) {
 		apply_world_bounds(body);
 		apply_righting(body, delta);
 		apply_damping(body, delta);
-		apply_gravity(body, delta);
+		apply_gravity(world, body, delta);
 		integrate(body, delta);
 		for(int j = 0; j < world->max_physics_bodies; j++) {
 			if(!world->physics_bodies[j].inuse || j == i) {
@@ -455,13 +464,38 @@ void physics_step(PhysicsWorld *world, float delta) {
 	}
 }
 
-void draw_sprites(PhysicsWorld *world) {
+void physics_draw_sprites(PhysicsWorld *world) {
 	for(int i = 0; i < world->max_physics_bodies; i++) {
 		PhysicsBody *body = &world->physics_bodies[i];
 		if(!body->inuse) {
 			continue;
 		}
-		if(vector2d_magnitude_between(body->position, vector2d(500, 500)) > 1000.0) {
+		if(vector2d_squared_distance_between(body->position, vector2d(500, 500)) > 1000.0*1000.0) {
+			continue;
+		}
+		if(!body->sprite) {
+			continue;
+		}
+		float rotation = body->rotation*(180.0/M_PI);
+		gf2d_sprite_draw(
+				body->sprite,
+				body->position,
+				NULL,
+				NULL,
+				&rotation,
+				NULL,
+				NULL,
+				0);
+	}
+}
+
+void physics_debug_draw(PhysicsWorld *world) {
+	for(int i = 0; i < world->max_physics_bodies; i++) {
+		PhysicsBody *body = &world->physics_bodies[i];
+		if(!body->inuse) {
+			continue;
+		}
+		if(vector2d_squared_distance_between(body->position, vector2d(500, 500)) > 1000.0*1000.0) {
 			continue;
 		}
 		switch (body->shape_type) {
@@ -538,8 +572,8 @@ void draw_sprites(PhysicsWorld *world) {
 	}
 }
 
-void create_test_world(PhysicsWorld *world) {
-	float f = 0.7;
+void physics_create_test_world(PhysicsWorld *world) {
+	float f = 1.0;
 	float b = 0.8;
 
 	PhysicsBody *floor = allocate_physics_body(world);
@@ -554,6 +588,7 @@ void create_test_world(PhysicsWorld *world) {
 	floor->physics_material.friction = b;
 	floor->physics_material.bounce = f;
 
+/*
 	floor = allocate_physics_body(world);
 	floor->physics_type = STATIC;
 	floor->position = vector2d(500.0, 50.0);
@@ -564,7 +599,7 @@ void create_test_world(PhysicsWorld *world) {
 	floor->moment_of_inertia = INFINITY;
 	floor->physics_material.friction = f;
 	floor->physics_material.bounce = b;
-
+*/
 	floor = allocate_physics_body(world);
 	floor->physics_type = STATIC;
 	floor->position = vector2d(50.0, 700.0);
@@ -589,15 +624,15 @@ void create_test_world(PhysicsWorld *world) {
 
 	PhysicsBody *ball;
 
-	for(int i = 0; i < 4; i++) {
+	for(int i = 0; i < 2; i++) {
 		ball = allocate_physics_body(world);
 		ball->physics_type = RIGID;
 		ball->position = vector2d(crand()*200.0+300.0, crand()*200.0+300.0);
 		ball->shape_type = CIRCLE;
-		ball->shape.circle.radius = 40.0;
-		ball->mass = 100.0;
+		ball->shape.circle.radius = 50.0;
+		ball->mass = 10.0;
 		ball->moment_of_inertia = 0.5*ball->mass*ball->shape.circle.radius*ball->shape.circle.radius;
-		ball->physics_material.bounce = 1.0;
+		ball->physics_material.bounce = 0.9;
 		ball->physics_material.friction = 1.0;
 	}
 }

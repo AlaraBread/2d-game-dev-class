@@ -70,14 +70,21 @@ typedef struct PhysicsWorld {
 	PhysicsBody *physics_bodies;
 	unsigned int max_physics_bodies;
 	unsigned int last_allocated_body;
+	float gravity;
 } PhysicsWorld;
-
 
 PhysicsWorld init_physics(unsigned int max_physics_bodies, bool allocate);
 PhysicsBody *allocate_physics_body(PhysicsWorld *world);
+int physics_get_body_id(PhysicsWorld *world, PhysicsBody *body);
+PhysicsBody *get_body(PhysicsWorld *world, int id);
+void apply_central_impulse(PhysicsBody *body, Vector2D impulse);
+void apply_impulse(PhysicsBody *body, Vector2D impulse, Vector2D point);
+void apply_central_force(PhysicsBody *body, Vector2D force, float delta);
+void apply_force(PhysicsBody *body, Vector2D force, Vector2D point, float delta);
 void free_physics(PhysicsWorld *world);
 void physics_step(PhysicsWorld *world, float delta);
-void draw_sprites(PhysicsWorld *world);
-void create_test_world(PhysicsWorld *world);
+void physics_draw_sprites(PhysicsWorld *world);
+void physics_debug_draw(PhysicsWorld *world);
+void physics_create_test_world(PhysicsWorld *world);
 
 #endif
