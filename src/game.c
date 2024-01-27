@@ -59,7 +59,7 @@ int main(int argc, char * argv[])
 	cursor_body->center_of_mass = vector2d(0.0, 100.0);
 	int cursor_body_id = physics_get_body_id(physics_world, cursor_body);
 	physics_create_test_world(physics_world);
-	float jump_interval = 60.0/194.0;
+	float jump_interval = 60.0/160.0;
 	float jump_velocity = 2000.0;
 	physics_world->gravity = jump_velocity/jump_interval; // hit the ground again after a certain interval
 

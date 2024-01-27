@@ -22,33 +22,15 @@ float vector2d_cross(Vector2D a, Vector2D b) {
 	return a.x * b.y - a.y * b.x;
 }
 
-bool float_is_finite(float f) {
+Bool float_is_finite(float f) {
 	u_int32_t x = *((Uint32 *)(&f));
 	x <<= 1;
 	x >>= 24;
 	return x != 0xFF;
 }
 
-bool vector2d_is_finite(Vector2D v) {
+Bool vector2d_is_finite(Vector2D v) {
 	return float_is_finite(v.x) && float_is_finite(v.y);
-}
-
-Vector2D vector2d_project(Vector2D v, Vector2D normal) {
-	Vector2D p;
-	float d = vector2d_dot_product(v, normal);
-	vector2d_scale(p, normal, d);
-	return p;
-}
-
-Vector2D vector2d_slide(Vector2D v, Vector2D normal) {
-	Vector2D tangent = vector2d_rotate(normal, M_PI/2.0);
-	return vector2d_project(v, tangent);
-}
-
-float vector2d_squared_distance_between(Vector2D a, Vector2D b) {
-	Vector2D c;
-	vector2d_sub(c, a, b);
-	return vector2d_magnitude_squared(c);
 }
 
 void reverse_collision(Collision *col) {
@@ -133,21 +115,21 @@ Collision capsule_circle_collision(PhysicsBody *capsule, PhysicsBody *circle) {
 	
 	Vector2D c_rel;
 	vector2d_sub(c_rel, circle->position, capsule->position);
-	bool side_lr = false;
+	Bool side_lr = false;
 	if(vector2d_dot_product(capsule_right, c_rel) > 0.0) {
 		side_lr = true;
 	}
 
 	Vector2D c_rel_top;
 	vector2d_sub(c_rel_top, c_rel, top_circle);
-	bool side_top = false;
+	Bool side_top = false;
 	if(vector2d_dot_product(capsule_up, c_rel_top) > 0.0) {
 		side_top = true;
 	}
 
 	Vector2D c_rel_bot;
 	vector2d_sub(c_rel_bot, c_rel, bottom_circle);
-	bool side_bottom = false;
+	Bool side_bottom = false;
 	if(vector2d_dot_product(capsule_up, c_rel_bot) < 0.0) {
 		side_bottom = true;
 	}
@@ -178,6 +160,99 @@ Collision capsule_circle_collision(PhysicsBody *capsule, PhysicsBody *circle) {
 	plane.rotation = 0.0;
 	Collision col = circle_plane_collision(circle, &plane);
 	reverse_collision(&col);
+	return col;
+}
+
+// taken from Real Time Collision Detection by Christer Ericson
+
+// Computes closest points C1 and C2 of S1(s)=P1+s*(Q1-P1) and
+// S2(t)=P2+t*(Q2-P2), returning s and t. Function result is squared
+// distance between between S1(s) and S2(t)
+float ClosestPtSegmentSegment(Vector2D p1, Vector2D q1, Vector2D p2, Vector2D q2,
+float *s, float *t, Vector2D *c1, Vector2D *c2)
+{
+	Vector2D d1; // Direction vector of segment S1
+	vector2d_sub(d1, q1, p1);
+	Vector2D d2; // Direction vector of segment S2
+	vector2d_sub(d2, q2, p2);
+	Vector2D r;
+	vector2d_sub(r, p1, p2);
+	float a = vector2d_dot_product(d1, d1); // Squared length of segment S1, always nonnegative
+	float e = vector2d_dot_product(d2, d2); // Squared length of segment S2, always nonnegative
+	float f = vector2d_dot_product(d2, r);
+	// Check if either or both segments degenerate into points
+	if (a <= GFC_EPSILON && e <= GFC_EPSILON) {
+		// Both segments degenerate into points
+		*s = *t = 0.0f;
+		vector2d_copy((*c1), p1);
+		vector2d_copy((*c2), p2);
+		Vector2D tmp;
+		vector2d_sub(tmp, (*c1), (*c2));
+		return vector2d_dot_product(tmp, tmp);
+	}
+	if (a <= GFC_EPSILON) {
+		// First segment degenerates into a point
+		*s = 0.0f;
+		*t = f / e; // s = 0 => t = (b*s + f) / e = f / e
+		*t = SDL_clamp(*t, 0.0f, 1.0f);
+	} else {
+		float c = vector2d_dot_product(d1, r);
+		if (e <= GFC_EPSILON) {
+			// Second segment degenerates into a point
+			*t = 0.0f;
+			*s = SDL_clamp(-c / a, 0.0f, 1.0f); // t = 0 => s = (b*t - c) / a = -c / a
+		} else {
+			// The general nondegenerate case starts here
+			float b = vector2d_dot_product(d1, d2);
+			float denom = a*e-b*b; // Always nonnegative
+			// If segments not parallel, compute closest point on L1 to L2 and
+			// clamp to segment S1. Else pick arbitrary s (here 0)
+			if (denom != 0.0f) {
+				*s = SDL_clamp((b*f - c*e) / denom, 0.0f, 1.0f);
+			} else *s = 0.0f;
+			// Compute point on L2 closest to S1(s) using
+			// t = Dot((P1 + D1*s) - P2,D2) / Dot(D2,D2) = (b*s + f) / e
+			*t = (b*(*s) + f) / e;
+			// If t in [0,1] done. Else clamp t, recompute s for the new value
+			// of t using s = Dot((P2 + D2*t) - P1,D1) / Dot(D1,D1)= (t*b - c) / a
+			// and clamp s to [0, 1]
+			if (*t < 0.0f) {
+				*t = 0.0f;
+				*s = SDL_clamp(-c / a, 0.0f, 1.0f);
+			} else if (*t > 1.0f) {
+				*t = 1.0f;
+				*s = SDL_clamp((b - c) / a, 0.0f, 1.0f);
+			}
+		}
+	}
+	vector2d_scale((*c1), d1, (*s));
+	vector2d_add((*c1), (*c1), p1);
+	vector2d_scale((*c2), d2, (*t));
+	vector2d_add((*c2), (*c2), p2);
+	Vector2D tmp;
+	vector2d_sub(tmp, (*c1), (*c2));
+	return vector2d_dot_product(tmp, tmp);
+}
+
+Collision capsule_capsule_collision(PhysicsBody *a, PhysicsBody *b) {
+	Vector2D a_p1, a_p2, b_p1, b_p2;
+	vector2d_add(a_p1, a->position, vector2d_rotate(vector2d(0.0, a->shape.capsule.height/2.0), a->rotation));
+	vector2d_add(a_p2, a->position, vector2d_rotate(vector2d(0.0, -a->shape.capsule.height/2.0), a->rotation));
+	vector2d_add(b_p1, b->position, vector2d_rotate(vector2d(0.0, b->shape.capsule.height/2.0), b->rotation));
+	vector2d_add(b_p2, b->position, vector2d_rotate(vector2d(0.0, -b->shape.capsule.height/2.0), b->rotation));
+	
+	Vector2D a_c, b_c;
+	float a_t, b_t;
+	Collision col;
+	col.distance = ClosestPtSegmentSegment(a_p1, a_p2, b_p1, b_p2, &a_t, &b_t, &a_c, &b_c);
+	col.distance = sqrtf(col.distance) - (a->shape.capsule.radius+b->shape.capsule.radius);
+	
+	vector2d_sub(col.normal, b_c, a_c);
+	vector2d_normalize(&col.normal);
+
+	vector2d_scale(col.position, col.normal, -a->shape.circle.radius+col.distance/2.0);
+	vector2d_add(col.position, col.position, a->position);
+	col.hit = col.distance < 0.0;
 	return col;
 }
 
@@ -283,6 +358,9 @@ void solve_collision(PhysicsBody *a, PhysicsBody *b, float delta) {
 				case CIRCLE:
 					col = capsule_circle_collision(a, b);
 					break;
+				case CAPSULE:
+					col = capsule_capsule_collision(a, b);
+					break;
 				default:
 					break;
 			}
@@ -356,12 +434,12 @@ void apply_damping(PhysicsBody *body, float delta) {
 	vector2d_scale(linear_damping, body->linear_velocity, delta*0.1);
 	vector2d_sub(body->linear_velocity, body->linear_velocity, linear_damping);
 
-	float angular_damping = body->angular_velocity*delta*0.1;
+	float angular_damping = body->angular_velocity*delta*0.5;
 	body->angular_velocity -= angular_damping;
 }
 
 void apply_world_bounds(PhysicsBody *body) {
-	bool reset = false;
+	Bool reset = false;
 	if(!vector2d_is_finite(body->position)) {
 		reset = true;
 	}
@@ -401,10 +479,15 @@ void apply_righting(PhysicsBody *body, float delta) {
 	if(body->shape_type != CAPSULE) {
 		return;
 	}
-	body->angular_velocity -= delta*SDL_clamp(400.0*wrapMinMax(body->rotation, -M_PI, M_PI), -40.0, 40.0);
+	float r = wrapMinMax(body->rotation, -M_PI, M_PI);
+	if(fabsf(r) > M_PI/4.0) {
+		body->position.x = INFINITY;
+		return;
+	}
+	body->angular_velocity -= delta*SDL_clamp(400.0*r, -10.0, 10.0);
 }
 
-PhysicsWorld init_physics(unsigned int max_physics_bodies, bool allocate) {
+PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate) {
 	PhysicsWorld world;
 	world.max_physics_bodies = max_physics_bodies;
 	if(allocate) {
@@ -470,9 +553,6 @@ void physics_draw_sprites(PhysicsWorld *world) {
 		if(!body->inuse) {
 			continue;
 		}
-		if(vector2d_squared_distance_between(body->position, vector2d(500, 500)) > 1000.0*1000.0) {
-			continue;
-		}
 		if(!body->sprite) {
 			continue;
 		}
@@ -493,9 +573,6 @@ void physics_debug_draw(PhysicsWorld *world) {
 	for(int i = 0; i < world->max_physics_bodies; i++) {
 		PhysicsBody *body = &world->physics_bodies[i];
 		if(!body->inuse) {
-			continue;
-		}
-		if(vector2d_squared_distance_between(body->position, vector2d(500, 500)) > 1000.0*1000.0) {
 			continue;
 		}
 		switch (body->shape_type) {
@@ -628,11 +705,13 @@ void physics_create_test_world(PhysicsWorld *world) {
 		ball = allocate_physics_body(world);
 		ball->physics_type = RIGID;
 		ball->position = vector2d(crand()*200.0+300.0, crand()*200.0+300.0);
-		ball->shape_type = CIRCLE;
+		ball->shape_type = CAPSULE;
 		ball->shape.circle.radius = 50.0;
+		ball->shape.capsule.height = 200.0;
+		ball->center_of_mass = vector2d(0.0, 100.0);
 		ball->mass = 10.0;
 		ball->moment_of_inertia = 0.5*ball->mass*ball->shape.circle.radius*ball->shape.circle.radius;
-		ball->physics_material.bounce = 0.9;
+		ball->physics_material.bounce = 0.1;
 		ball->physics_material.friction = 1.0;
 	}
 }

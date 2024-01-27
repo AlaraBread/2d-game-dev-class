@@ -42,7 +42,7 @@ typedef struct PhysicsMaterial {
 } PhysicsMaterial;
 
 typedef struct PhysicsBody {
-	bool inuse;
+	Bool inuse;
 	Vector2D position;
 	float rotation;
 	Vector2D linear_velocity;
@@ -61,7 +61,7 @@ typedef struct Collision {
 	Vector2D position; // in global space
 	Vector2D normal;
 	float distance;
-	bool hit;
+	Bool hit;
 } Collision;
 
 typedef struct PhysicsWorld {
@@ -71,7 +71,7 @@ typedef struct PhysicsWorld {
 	float gravity;
 } PhysicsWorld;
 
-PhysicsWorld init_physics(unsigned int max_physics_bodies, bool allocate);
+PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate);
 PhysicsBody *allocate_physics_body(PhysicsWorld *world);
 int physics_get_body_id(PhysicsWorld *world, PhysicsBody *body);
 PhysicsBody *get_body(PhysicsWorld *world, int id);
