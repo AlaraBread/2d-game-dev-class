@@ -1,9 +1,7 @@
 #include "gf2d_draw.h"
 #include "physics.h"
 #include "mosher.h"
-
-#define randf() ((rand()&0xFFFF)/(float)0xFFFF)
-#define crand() (randf()*2.0-1.0)
+#include "wall.h"
 
 float vector2d_cross(Vector2D a, Vector2D b) {
 	return a.x * b.y - a.y * b.x;
@@ -318,7 +316,7 @@ Vector2D get_normal_and_tangent_mass(PhysicsBody *a, PhysicsBody *b, Collision c
 	return vector2d(mass_normal, mass_tangent);
 }
 
-void solve_collision(PhysicsWorld *world, PhysicsBody *a, PhysicsBody *b, float delta) {
+void solve_collision(PhysicsWorld *world, PhysicsBody *a, PhysicsBody *b, float delta, Bool simple) {
 	if(a->physics_type != RIGID) {
 		return;
 	}
@@ -365,21 +363,23 @@ void solve_collision(PhysicsWorld *world, PhysicsBody *a, PhysicsBody *b, float 
 	if(a->physics_type == TRIGGER || b->physics_type == TRIGGER) {
 		return;
 	}
-	for(int i = 0; i < MAX_REPORTED_COLLISIONS; i++) {
-		if(!a->collisions[i].hit) {
-			col.a_idx = physics_get_body_id(world, a);
-			col.b_idx = physics_get_body_id(world, b);
-			a->collisions[i] = col;
-			break;
+	if(!simple) {
+		for(int i = 0; i < MAX_REPORTED_COLLISIONS; i++) {
+			if(!a->collisions[i].hit) {
+				col.a_idx = physics_get_body_id(world, a);
+				col.b_idx = physics_get_body_id(world, b);
+				a->collisions[i] = col;
+				break;
+			}
 		}
-	}
-	for(int i = 0; i < MAX_REPORTED_COLLISIONS; i++) {
-		if(!b->collisions[i].hit) {
-			col.a_idx = physics_get_body_id(world, b);
-			col.b_idx = physics_get_body_id(world, a);
-			b->collisions[i] = col;
-			reverse_collision(&b->collisions[i]);
-			break;
+		for(int i = 0; i < MAX_REPORTED_COLLISIONS; i++) {
+			if(!b->collisions[i].hit) {
+				col.a_idx = physics_get_body_id(world, b);
+				col.b_idx = physics_get_body_id(world, a);
+				b->collisions[i] = col;
+				reverse_collision(&b->collisions[i]);
+				break;
+			}
 		}
 	}
 	Vector2D recovery_vector;
@@ -391,6 +391,10 @@ void solve_collision(PhysicsWorld *world, PhysicsBody *a, PhysicsBody *b, float 
 		vector2d_sub(b->position, b->position, recovery_vector);
 	}
 
+	if(simple) {
+		return;
+	}
+	
 	Vector2D nt_mass = get_normal_and_tangent_mass(a, b, col);
 	float normal_mass = nt_mass.x;
 	float tangent_mass = nt_mass.y;
@@ -469,6 +473,18 @@ void apply_world_bounds(PhysicsBody *body) {
 	}
 }
 
+void drop_to_floor(PhysicsBody *body, PhysicsWorld *world) {
+	if(world->floor_idx < 0) {
+		return;
+	}
+	PhysicsBody *floor = physics_get_body(world, world->floor_idx);
+	if(!floor->inuse || floor->shape_type != PLANE) {
+		return;
+	}
+	body->position.y = 1000.0;
+	solve_collision(world, body, floor, 0.0, true);
+}
+
 void integrate(PhysicsBody *body, float delta) {
 	Vector2D linear_move;
 	vector2d_scale(linear_move, body->linear_velocity, delta);
@@ -489,6 +505,8 @@ PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate) {
 	}
 	world.last_allocated_body = max_physics_bodies-1;
 	world.gravity = 400.0;
+	world.floor_idx = -1;
+	world.player_idx = -1;
 	return world;
 }
 
@@ -535,7 +553,7 @@ void physics_step(PhysicsWorld *world, float delta) {
 			if(!world->physics_bodies[j].inuse || j == i) {
 				continue;
 			}
-			solve_collision(world, body, &world->physics_bodies[j], delta);
+			solve_collision(world, body, &world->physics_bodies[j], delta, false);
 		}
 		if(body->update) {
 			body->update(body, world, delta);
@@ -639,67 +657,13 @@ void physics_debug_draw(PhysicsWorld *world) {
 void physics_create_test_world(PhysicsWorld *world) {
 	float f = 1.0;
 	float b = 0.8;
-
-	PhysicsBody *floor = allocate_physics_body(world);
-	floor->physics_type = STATIC;
-	floor->position = vector2d(500.0, 720.0-50.0);
-	floor->shape_type = PLANE;
-	floor->shape.plane.normal = vector2d(0.0, -1.0);
-	vector2d_normalize(&floor->shape.plane.normal);
-	floor->linear_velocity = vector2d(0.0, 0.0);
-	floor->mass = INFINITY;
-	floor->moment_of_inertia = INFINITY;
-	floor->physics_material.friction = b;
-	floor->physics_material.bounce = f;
-
-/*
-	floor = allocate_physics_body(world);
-	floor->physics_type = STATIC;
-	floor->position = vector2d(500.0, 50.0);
-	floor->shape_type = PLANE;
-	floor->shape.plane.normal = vector2d(0.0, 1.0);
-	floor->linear_velocity = vector2d(0.0, 0.0);
-	floor->mass = INFINITY;
-	floor->moment_of_inertia = INFINITY;
-	floor->physics_material.friction = f;
-	floor->physics_material.bounce = b;
-*/
-	floor = allocate_physics_body(world);
-	floor->physics_type = STATIC;
-	floor->position = vector2d(50.0, 700.0);
-	floor->shape_type = PLANE;
-	floor->shape.plane.normal = vector2d(1.0, 0.0);
-	floor->linear_velocity = vector2d(0.0, 0.0);
-	floor->mass = INFINITY;
-	floor->moment_of_inertia = INFINITY;
-	floor->physics_material.friction = f;
-	floor->physics_material.bounce = b;
-
-	floor = allocate_physics_body(world);
-	floor->physics_type = STATIC;
-	floor->position = vector2d(1200.0-50.0, 700.0);
-	floor->shape_type = PLANE;
-	floor->shape.plane.normal = vector2d(-1.0, 0.0);
-	floor->linear_velocity = vector2d(0.0, 0.0);
-	floor->mass = INFINITY;
-	floor->moment_of_inertia = INFINITY;
-	floor->physics_material.friction = f;
-	floor->physics_material.bounce = b;
+	
+	init_floor(world, vector2d(500.0, 720.0-50.0), vector2d(0.0, -1.0), f, b);
+	init_wall(world, vector2d(50.0, 700.0), vector2d(1.0, 0.0), f, b);
+	init_wall(world, vector2d(1200.0-50.0, 700.0), vector2d(-1.0, 0.0), f, b);
 
 	PhysicsBody *enemy;
 	for(int i = 0; i < 2; i++) {
-		enemy = allocate_physics_body(world);
-		enemy->physics_type = RIGID;
-		enemy->position = vector2d(crand()*200.0+300.0, crand()*200.0+300.0);
-		enemy->shape_type = CAPSULE;
-		enemy->shape.circle.radius = 40.0;
-		enemy->shape.capsule.height = 150.0;
-		enemy->center_of_mass = vector2d(0.0, 75.0);
-		enemy->mass = 50.0;
-		float l = enemy->shape.capsule.height+enemy->shape.capsule.radius*2.0;
-		enemy->moment_of_inertia = enemy->mass*l*l/3.0;
-		enemy->physics_material.bounce = 0.1;
-		enemy->physics_material.friction = 1.0;
-		enemy->update = mosher_update;
+		enemy = init_enemy_mosher(world);
 	}
 }

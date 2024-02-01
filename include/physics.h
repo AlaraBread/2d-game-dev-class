@@ -83,7 +83,8 @@ typedef struct PhysicsBody_S {
 
 typedef struct PhysicsWorld_S {
 	PhysicsBody *physics_bodies;
-	int  player_idx;
+	int player_idx;
+	int floor_idx;
 	unsigned int max_physics_bodies;
 	unsigned int last_allocated_body;
 	float gravity;
@@ -104,6 +105,7 @@ void apply_central_force(PhysicsBody *body, Vector2D force, float delta);
 void apply_force(PhysicsBody *body, Vector2D force, Vector2D point, float delta);
 void free_physics(PhysicsWorld *world);
 void physics_step(PhysicsWorld *world, float delta);
+void drop_to_floor(PhysicsBody *body, PhysicsWorld *world);
 void physics_draw_sprites(PhysicsWorld *world);
 void physics_debug_draw(PhysicsWorld *world);
 void physics_create_test_world(PhysicsWorld *world);
