@@ -5,6 +5,7 @@
 #include "gf2d_sprite.h"
 #include "rollback.h"
 #include "audio.h"
+#include "mosher.h"
 
 int main(int argc, char * argv[])
 {
@@ -45,25 +46,29 @@ int main(int argc, char * argv[])
 	// physics setup
 	Rollback rollback_world = init_rollback(2000, 20);
 	PhysicsWorld *physics_world = rollback_cur_physics(&rollback_world);
-	PhysicsBody *cursor_body = allocate_physics_body(physics_world);
-	cursor_body->shape_type = CAPSULE;
-	cursor_body->shape.circle.radius = 50.0;
-	cursor_body->shape.capsule.height = 200.0;
-	cursor_body->physics_type = RIGID;
-	cursor_body->mass = 100.0;
-	float l = cursor_body->shape.capsule.height+cursor_body->shape.capsule.radius*2.0;
-	cursor_body->moment_of_inertia = cursor_body->mass*l*l/3.0;
-	cursor_body->physics_material.friction = 1.0;
-	cursor_body->physics_material.bounce = 1.0;
-	cursor_body->position = vector2d(100.0, 200.0);
-	cursor_body->center_of_mass = vector2d(0.0, 100.0);
-	int cursor_body_id = physics_get_body_id(physics_world, cursor_body);
+	PhysicsBody *player_body = allocate_physics_body(physics_world);
+	player_body->shape_type = CAPSULE;
+	player_body->shape.circle.radius = 50.0;
+	player_body->shape.capsule.height = 200.0;
+	player_body->physics_type = RIGID;
+	player_body->mass = 1000.0;
+	float l = player_body->shape.capsule.height+player_body->shape.capsule.radius*2.0;
+	player_body->moment_of_inertia = player_body->mass*l*l/3.0;
+	player_body->physics_material.friction = 1.0;
+	player_body->physics_material.bounce = 1.0;
+	player_body->position = vector2d(100.0, 200.0);
+	player_body->center_of_mass = vector2d(0.0, 100.0);
+	player_body->tags = TAG_PLAYER;
+	player_body->update = mosher_update;
+	physics_world->player_idx = physics_get_body_id(physics_world, player_body);
+
 	physics_create_test_world(physics_world);
 	float jump_interval = 60.0/160.0;
-	float jump_velocity = 2000.0;
+	float jump_velocity = 1000.0;
 	physics_world->gravity = jump_velocity/jump_interval; // hit the ground again after a certain interval
+	physics_world->jump_velocity = jump_velocity;
 
-	Uint32 old_mouse_buttons = 0;
+	Uint32 prev_mouse_buttons = 0;
 
 	/*main game loop*/
 	while(!done)
@@ -96,19 +101,10 @@ int main(int argc, char * argv[])
 				(int)mf);
 
 		physics_world = rollback_cur_physics(&rollback_world);
-		cursor_body = &physics_world->physics_bodies[0];
-		if(mouse_buttons&1 && !old_mouse_buttons&1) {
-			Vector2D impulse;
-			vector2d_sub(impulse, vector2d(mx, 0.0), cursor_body->position);
-			vector2d_scale(impulse, impulse, 100.0);
-			impulse.y = cursor_body->mass*jump_velocity;
-			cursor_body->linear_velocity = vector2d(0.0, 0.0);
-			apply_central_impulse(cursor_body, impulse);
-			cursor_body->position.y = 720.0;
-			cursor_body->physics_material.bounce = 1.0;
-		} else {
-			cursor_body->physics_material.bounce = 0.0;
-		}
+		physics_world->mouse_x = mx;
+		physics_world->mouse_y = my;
+		physics_world->prev_mouse_buttons = prev_mouse_buttons;
+		physics_world->mouse_buttons = mouse_buttons;
 
 		if(mouse_buttons&4) {
 			physics_world = rollback_step_back(&rollback_world, 0.016);
@@ -124,11 +120,13 @@ int main(int argc, char * argv[])
 			physics_world = rollback_step(&rollback_world, 0.016);
 		}
 		physics_debug_draw(physics_world);
+		physics_draw_sprites(physics_world);
 
 		gf2d_graphics_next_frame();// render current draw frame and skip to the next frame
 		
-		old_mouse_buttons = mouse_buttons;
+		prev_mouse_buttons = mouse_buttons;
 		if (keys[SDL_SCANCODE_ESCAPE])done = 1; // exit condition
+		printf("%f\n", gf2d_graphics_get_frames_per_second());
 	}
 	free_rollback(&rollback_world);
 	slog("---==== END ====---");

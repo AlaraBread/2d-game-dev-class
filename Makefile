@@ -11,3 +11,7 @@ all:
 run:
 	make all
 	./gf2d
+
+grind:
+	make all
+	valgrind --tool=callgrind ./gf2d

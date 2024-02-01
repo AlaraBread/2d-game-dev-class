@@ -5,6 +5,8 @@
 #ifndef __ALARA_PHYSICS__
 #define __ALARA_PHYSICS__
 
+#define MAX_REPORTED_COLLISIONS 2
+
 typedef struct CapsuleShape {
 	float radius;
 	float height;
@@ -41,7 +43,22 @@ typedef struct PhysicsMaterial {
 	float friction;
 } PhysicsMaterial;
 
-typedef struct PhysicsBody {
+typedef struct Collision {
+	Vector2D position; // in global space
+	Vector2D normal;
+	float distance;
+	Bool hit;
+	int a_idx;
+	int b_idx;
+} Collision;
+
+// for PhysicsBody.tags
+#define TAG_PLAYER (1<<0)
+
+typedef struct PhysicsBody_S PhysicsBody;
+typedef struct PhysicsWorld_S PhysicsWorld;
+
+typedef struct PhysicsBody_S {
 	Bool inuse;
 	Vector2D position;
 	float rotation;
@@ -54,27 +71,33 @@ typedef struct PhysicsBody {
 	ShapeType shape_type;
 	ColliderShape shape;
 	PhysicsMaterial physics_material;
+	float gravity_scale;
+	Collision collisions[MAX_REPORTED_COLLISIONS];
+	long int timer;
+	long int tags;
 	Sprite *sprite;
+	Vector2D sprite_offset;
+	Vector2D sprite_scale;
+	void (*update)(PhysicsBody *body, PhysicsWorld *world, float delta);
 } PhysicsBody;
 
-typedef struct Collision {
-	Vector2D position; // in global space
-	Vector2D normal;
-	float distance;
-	Bool hit;
-} Collision;
-
-typedef struct PhysicsWorld {
+typedef struct PhysicsWorld_S {
 	PhysicsBody *physics_bodies;
+	int  player_idx;
 	unsigned int max_physics_bodies;
 	unsigned int last_allocated_body;
 	float gravity;
+	const Uint8 * keys;
+	Uint32 prev_mouse_buttons;
+	Uint32 mouse_buttons;
+	int mouse_x, mouse_y;
+	float jump_velocity;
 } PhysicsWorld;
 
 PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate);
 PhysicsBody *allocate_physics_body(PhysicsWorld *world);
 int physics_get_body_id(PhysicsWorld *world, PhysicsBody *body);
-PhysicsBody *get_body(PhysicsWorld *world, int id);
+PhysicsBody *physics_get_body(PhysicsWorld *world, int id);
 void apply_central_impulse(PhysicsBody *body, Vector2D impulse);
 void apply_impulse(PhysicsBody *body, Vector2D impulse, Vector2D point);
 void apply_central_force(PhysicsBody *body, Vector2D force, float delta);

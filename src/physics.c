@@ -1,22 +1,9 @@
 #include "gf2d_draw.h"
 #include "physics.h"
+#include "mosher.h"
 
 #define randf() ((rand()&0xFFFF)/(float)0xFFFF)
 #define crand() (randf()*2.0-1.0)
-
-// https://stackoverflow.com/questions/4633177/how-to-wrap-a-float-to-the-interval-pi-pi
-// answer by Tim Čas
-/* wrap x -> [0,max) */
-double wrapMax(double x, double max)
-{
-    /* integer math: `(max + x % max) % max` */
-    return fmod(max + fmod(x, max), max);
-}
-/* wrap x -> [min,max) */
-double wrapMinMax(double x, double min, double max)
-{
-    return min + wrapMax(x - min, max - min);
-}
 
 float vector2d_cross(Vector2D a, Vector2D b) {
 	return a.x * b.y - a.y * b.x;
@@ -331,7 +318,7 @@ Vector2D get_normal_and_tangent_mass(PhysicsBody *a, PhysicsBody *b, Collision c
 	return vector2d(mass_normal, mass_tangent);
 }
 
-void solve_collision(PhysicsBody *a, PhysicsBody *b, float delta) {
+void solve_collision(PhysicsWorld *world, PhysicsBody *a, PhysicsBody *b, float delta) {
 	if(a->physics_type != RIGID) {
 		return;
 	}
@@ -378,6 +365,23 @@ void solve_collision(PhysicsBody *a, PhysicsBody *b, float delta) {
 	if(a->physics_type == TRIGGER || b->physics_type == TRIGGER) {
 		return;
 	}
+	for(int i = 0; i < MAX_REPORTED_COLLISIONS; i++) {
+		if(!a->collisions[i].hit) {
+			col.a_idx = physics_get_body_id(world, a);
+			col.b_idx = physics_get_body_id(world, b);
+			a->collisions[i] = col;
+			break;
+		}
+	}
+	for(int i = 0; i < MAX_REPORTED_COLLISIONS; i++) {
+		if(!b->collisions[i].hit) {
+			col.a_idx = physics_get_body_id(world, b);
+			col.b_idx = physics_get_body_id(world, a);
+			b->collisions[i] = col;
+			reverse_collision(&b->collisions[i]);
+			break;
+		}
+	}
 	Vector2D recovery_vector;
 	vector2d_scale(recovery_vector, col.normal, col.distance/((a->physics_type == RIGID) + (b->physics_type == RIGID)));
 	if(a->physics_type == RIGID) {
@@ -422,7 +426,7 @@ void apply_gravity(PhysicsWorld *world, PhysicsBody *body, float delta) {
 	if(body->physics_type != RIGID) {
 		return;
 	}
-	body->linear_velocity.y += world->gravity*delta;
+	body->linear_velocity.y += world->gravity*body->gravity_scale*delta;
 }
 
 void apply_damping(PhysicsBody *body, float delta) {
@@ -434,7 +438,7 @@ void apply_damping(PhysicsBody *body, float delta) {
 	vector2d_scale(linear_damping, body->linear_velocity, delta*0.1);
 	vector2d_sub(body->linear_velocity, body->linear_velocity, linear_damping);
 
-	float angular_damping = body->angular_velocity*delta*0.5;
+	float angular_damping = body->angular_velocity*delta*1.0;
 	body->angular_velocity -= angular_damping;
 }
 
@@ -457,8 +461,8 @@ void apply_world_bounds(PhysicsBody *body) {
 		reset = true;
 	}
 	if(reset) {
-		body->position.x = 600.0;
-		body->position.y = 0.0;
+		body->position.x = gfc_random()*1200.0;
+		body->position.y = -2500.0;
 		body->linear_velocity = vector2d(0.0, 0.0);
 		body->angular_velocity = 0.0;
 		body->rotation = 0.0;
@@ -473,18 +477,6 @@ void integrate(PhysicsBody *body, float delta) {
 	Vector2D com;
 	vector2d_add(com, body->position, vector2d_rotate(body->center_of_mass, body->rotation));
 	body->position = vector2d_rotate_around_center(body->position, body->angular_velocity*delta, com);
-}
-
-void apply_righting(PhysicsBody *body, float delta) {
-	if(body->shape_type != CAPSULE) {
-		return;
-	}
-	float r = wrapMinMax(body->rotation, -M_PI, M_PI);
-	if(fabsf(r) > M_PI/4.0) {
-		body->position.x = INFINITY;
-		return;
-	}
-	body->angular_velocity -= delta*SDL_clamp(400.0*r, -10.0, 10.0);
 }
 
 PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate) {
@@ -513,6 +505,7 @@ PhysicsBody *allocate_physics_body(PhysicsWorld *world) {
 			PhysicsBody *body = &world->physics_bodies[i];
 			memset(body, 0, sizeof(PhysicsBody));
 			body->inuse = true;
+			body->gravity_scale = 1.0;
 			return body;
 		}
 	}
@@ -523,7 +516,7 @@ int physics_get_body_id(PhysicsWorld *world, PhysicsBody *body) {
 	return body-world->physics_bodies;
 }
 
-PhysicsBody *get_body(PhysicsWorld *world, int id) {
+PhysicsBody *physics_get_body(PhysicsWorld *world, int id) {
 	return &world->physics_bodies[id];
 }
 
@@ -533,8 +526,8 @@ void physics_step(PhysicsWorld *world, float delta) {
 		if(!body->inuse) {
 			continue;
 		}
+		memset(body->collisions, 0, MAX_REPORTED_COLLISIONS*sizeof(Collision));
 		apply_world_bounds(body);
-		apply_righting(body, delta);
 		apply_damping(body, delta);
 		apply_gravity(world, body, delta);
 		integrate(body, delta);
@@ -542,7 +535,10 @@ void physics_step(PhysicsWorld *world, float delta) {
 			if(!world->physics_bodies[j].inuse || j == i) {
 				continue;
 			}
-			solve_collision(body, &world->physics_bodies[j], delta);
+			solve_collision(world, body, &world->physics_bodies[j], delta);
+		}
+		if(body->update) {
+			body->update(body, world, delta);
 		}
 	}
 }
@@ -557,10 +553,14 @@ void physics_draw_sprites(PhysicsWorld *world) {
 			continue;
 		}
 		float rotation = body->rotation*(180.0/M_PI);
+		
+		Vector2D position;
+		vector2d_add(position, body->position, vector2d_rotate(body->sprite_offset, body->rotation));
+
 		gf2d_sprite_draw(
 				body->sprite,
-				body->position,
-				NULL,
+				position,
+				&body->sprite_scale,
 				NULL,
 				&rotation,
 				NULL,
@@ -633,19 +633,6 @@ void physics_debug_draw(PhysicsWorld *world) {
 			default:
 				break;
 		}
-		if(!body->sprite) {
-			continue;
-		}
-		float rotation = body->rotation*(180.0/M_PI);
-		gf2d_sprite_draw(
-				body->sprite,
-				body->position,
-				NULL,
-				NULL,
-				&rotation,
-				NULL,
-				NULL,
-				0);
 	}
 }
 
@@ -699,19 +686,20 @@ void physics_create_test_world(PhysicsWorld *world) {
 	floor->physics_material.friction = f;
 	floor->physics_material.bounce = b;
 
-	PhysicsBody *ball;
-
+	PhysicsBody *enemy;
 	for(int i = 0; i < 2; i++) {
-		ball = allocate_physics_body(world);
-		ball->physics_type = RIGID;
-		ball->position = vector2d(crand()*200.0+300.0, crand()*200.0+300.0);
-		ball->shape_type = CAPSULE;
-		ball->shape.circle.radius = 50.0;
-		ball->shape.capsule.height = 200.0;
-		ball->center_of_mass = vector2d(0.0, 100.0);
-		ball->mass = 10.0;
-		ball->moment_of_inertia = 0.5*ball->mass*ball->shape.circle.radius*ball->shape.circle.radius;
-		ball->physics_material.bounce = 0.1;
-		ball->physics_material.friction = 1.0;
+		enemy = allocate_physics_body(world);
+		enemy->physics_type = RIGID;
+		enemy->position = vector2d(crand()*200.0+300.0, crand()*200.0+300.0);
+		enemy->shape_type = CAPSULE;
+		enemy->shape.circle.radius = 40.0;
+		enemy->shape.capsule.height = 150.0;
+		enemy->center_of_mass = vector2d(0.0, 75.0);
+		enemy->mass = 50.0;
+		float l = enemy->shape.capsule.height+enemy->shape.capsule.radius*2.0;
+		enemy->moment_of_inertia = enemy->mass*l*l/3.0;
+		enemy->physics_material.bounce = 0.1;
+		enemy->physics_material.friction = 1.0;
+		enemy->update = mosher_update;
 	}
 }
