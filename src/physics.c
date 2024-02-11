@@ -320,6 +320,9 @@ void solve_collision(PhysicsWorld *world, PhysicsBody *a, PhysicsBody *b, float 
 	if(a->physics_type != RIGID) {
 		return;
 	}
+	if(!(a->mask & b->layer)) {
+		return;
+	}
 	Collision col;
 	col.hit = false;
 	switch (a->shape_type) {
@@ -530,6 +533,10 @@ PhysicsBody *allocate_physics_body(PhysicsWorld *world) {
 	return NULL;
 }
 
+void physics_clear_bodies(PhysicsWorld *world) {
+	memset(world->physics_bodies, 0, sizeof(PhysicsBody) * world->max_physics_bodies);
+}
+
 int physics_get_body_id(PhysicsWorld *world, PhysicsBody *body) {
 	return body-world->physics_bodies;
 }
@@ -651,19 +658,5 @@ void physics_debug_draw(PhysicsWorld *world) {
 			default:
 				break;
 		}
-	}
-}
-
-void physics_create_test_world(PhysicsWorld *world) {
-	float f = 1.0;
-	float b = 0.8;
-	
-	init_floor(world, vector2d(500.0, 720.0-50.0), vector2d(0.0, -1.0), f, b);
-	init_wall(world, vector2d(50.0, 700.0), vector2d(1.0, 0.0), f, b);
-	init_wall(world, vector2d(1200.0-50.0, 700.0), vector2d(-1.0, 0.0), f, b);
-
-	PhysicsBody *enemy;
-	for(int i = 0; i < 2; i++) {
-		enemy = init_enemy_mosher(world);
 	}
 }

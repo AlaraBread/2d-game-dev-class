@@ -8,6 +8,7 @@
 #include "mosher.h"
 #include "font.h"
 #include "entity.h"
+#include "main_menu.h"
 
 Rollback g_rollback;
 
@@ -45,19 +46,15 @@ int main(int argc, char * argv[])
 	init_audio();
 	init_font();
 
-	init_frame_counter()->position = vector2d(100, 300);
-	init_frame_counter()->position = vector2d(400, 300);
-	init_frame_counter()->position = vector2d(700, 300);
-
 	// physics setup
-	g_rollback = init_rollback(2000, 20);
+	g_rollback = init_rollback(200, 20);
 	PhysicsWorld *physics_world = rollback_cur_physics(&g_rollback);
-	init_player_mosher(physics_world);
-	physics_create_test_world(physics_world);
 	float jump_interval = 60.0/160.0;
 	float jump_velocity = 1000.0;
 	physics_world->gravity = jump_velocity/jump_interval; // hit the ground again after a certain interval
 	physics_world->jump_velocity = jump_velocity;
+
+	main_menu(&g_rollback);
 
 	g_prev_mouse_buttons = 0;
 
@@ -82,7 +79,7 @@ int main(int argc, char * argv[])
 		gf2d_graphics_next_frame();// render current draw frame and skip to the next frame
 
 		if (keys[SDL_SCANCODE_ESCAPE])done = 1; // exit condition
-		//printf("%f\n", gf2d_graphics_get_frames_per_second());
+		printf("%f\n", gf2d_graphics_get_frames_per_second());
 	}
 	free_rollback(&g_rollback);
 	slog("---==== END ====---");
@@ -97,26 +94,8 @@ void run_physics_frame() {
 	physics_world->prev_mouse_buttons = g_prev_mouse_buttons;
 	physics_world->mouse_buttons = g_mouse_buttons;
 
-	if(g_mouse_buttons&4) {
-		// rewind
-		physics_world = rollback_step_back(&g_rollback, 0.016);
+	physics_world = rollback_step(&g_rollback, 0.016);
 
-		Sprite *rewind = gf2d_sprite_load_image("images/rewind.png");
-		gf2d_sprite_draw_image(rewind,vector2d(0,0));
-		gf2d_sprite_free(rewind);
-	} else {
-		if(g_mouse_buttons&2) {
-			// fast forward
-			rollback_step(&g_rollback, 0.016);
-			rollback_step(&g_rollback, 0.016);
-			rollback_step(&g_rollback, 0.016);
-			Sprite *fastforward = gf2d_sprite_load_image("images/fastforward.png");
-			gf2d_sprite_draw_image(fastforward,vector2d(0,0));
-			gf2d_sprite_free(fastforward);
-		}
-		// normal speed
-		physics_world = rollback_step(&g_rollback, 0.016);
-	}
 	physics_debug_draw(physics_world);
 	physics_draw_sprites(physics_world);
 }

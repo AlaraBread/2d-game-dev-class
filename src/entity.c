@@ -1,6 +1,7 @@
 #include "gf2d_draw.h"
 #include "entity.h"
 #include "font.h"
+#include "util.h"
 
 unsigned int g_max_entities;
 unsigned int g_last_allocated_entity;
@@ -37,6 +38,11 @@ Entity *allocate_entity() {
 	return NULL;
 }
 
+void clear_entities() {
+	for(int i = 0; i < g_max_entities; i++) free_entity(&g_entities[i]);
+	memset(g_entities, 0, sizeof(Entity) * g_max_entities);
+}
+
 void free_entity(Entity *ent) {
 	if(!ent->inuse) {
 		return;
@@ -47,12 +53,59 @@ void free_entity(Entity *ent) {
 	ent->inuse = false;
 }
 
+extern Uint32 g_prev_mouse_buttons;
+extern Uint32 g_mouse_buttons;
+extern int g_mouse_x;
+extern int g_mouse_y;
+extern int g_old_mouse_x;
+extern int g_old_mouse_y;
+
+Bool entity_rect_test(Entity *ent, int x, int y) {
+	return x > ent->position.x && x < ent->position.x+ent->size.x &&
+			y > ent->position.y && y < ent->position.y+ent->size.y;
+}
+
+void entity_mouse_events(Entity *ent) {
+	if(!ent->mouse_enter && !ent->mouse_exit) {
+		return;
+	}
+	Bool is_in_rect = entity_rect_test(ent, g_mouse_x, g_mouse_y);
+	Bool was_in_rect = entity_rect_test(ent, g_old_mouse_x, g_old_mouse_y);
+	
+	if(ent->mouse_enter && is_in_rect && !was_in_rect) {
+		ent->mouse_enter(ent);
+	}
+	if(ent->mouse_exit && !is_in_rect && was_in_rect) {
+		if(ent->clicked && ent->mouse_up) {
+			ent->mouse_up(ent);
+		}
+		ent->mouse_exit(ent);
+		ent->clicked = false;
+	}
+	if(is_in_rect && (g_mouse_buttons & 1)) {
+		ent->clicked = true;
+		if(ent->mouse_down) {
+			ent->mouse_down(ent);
+		}
+	}
+	if(is_in_rect && !(g_mouse_buttons & 1) && ent->clicked) {
+		ent->clicked = false;
+		if(ent->mouse_up) {
+			ent->mouse_up(ent);
+		}
+		if(ent->click) {
+			ent->click(ent);
+		}
+	}
+}
+
 void entity_frame() {
 	for(int i = 0; i < g_max_entities; i++) {
 		Entity *ent = &g_entities[i];
 		if(!ent->inuse) {
 			continue;
 		}
+		entity_mouse_events(ent);
 		if(ent->think) {
 			ent->think(ent);
 		}
@@ -71,33 +124,35 @@ void entity_frame() {
 	}
 }
 
-int get_entity_id(Entity *body) {
-	return body-g_entities;
+int get_entity_id(Entity *ent) {
+	return ent-g_entities;
 }
 
 Entity *get_entity(int id) {
 	return &g_entities[id];
 }
 
-void draw_frame_counter(Entity *ent) {
-	font_render(ent->text, gfc_color(1.0, 1.0, 1.0, 1.0), ent->position, ent->size);
+void button_mouse_enter(Entity *button) {
+	button->bg_color = gfc_color(0.2, 0.2, 0.2, 1.0);
 }
 
-void update_frame_counter(Entity *ent) {
-	ent->timer += 1;
-	SDL_itoa(ent->timer, ent->text, 10);
+void button_mouse_exit(Entity *button) {
+	button->bg_color = gfc_color(0.1, 0.1, 0.1, 1.0);
 }
 
-void cleanup_frame_counter(Entity *ent) {
-	free(ent->text);
+void button_mouse_down(Entity *button) {
+	button->bg_color = gfc_color(0.0, 0.0, 0.0, 1.0);
 }
 
-Entity *init_frame_counter() {
-	Entity *ent = allocate_entity();
-	ent->size = vector2d(100, 100);
-	ent->draw = draw_frame_counter;
-	ent->update = update_frame_counter;
-	ent->cleanup = cleanup_frame_counter;
-	ent->text = calloc(256, sizeof(char));
-	return ent;
+void button_mouse_up(Entity *button) {
+	button->bg_color = gfc_color(0.2, 0.2, 0.2, 1.0);
+}
+
+void draw_text_rect(Entity *ent) {
+	Rect rect = gfc_rect(ent->position.x, ent->position.y, ent->size.x, ent->size.y);
+	gf2d_draw_rect_filled(rect, ent->bg_color);
+	gf2d_draw_rect(rect, ent->border_color);
+	font_render_aligned(ent->text, ent->font_size, ent->color,
+			sdl_rect(ent->position.x, ent->position.y, ent->size.x, ent->size.y),
+			ent->text_align_x, ent->text_align_y);
 }

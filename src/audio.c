@@ -20,13 +20,23 @@ void init_audio() {
             (SDL_AUDIO_ISFLOAT(format) ? " (float)" : ""),
             (channels > 2) ? "surround" : (channels > 1) ? "stereo" : "mono");
 	}
-	Mix_VolumeMusic(MIX_MAX_VOLUME);
+	music_volume(1.0);
+	atexit(free_audio);
+
+	Mix_MusicDuration(g_music);
+	Mix_GetMusicPosition(g_music);
+}
+
+void music_volume(float volume) {
+	Mix_VolumeMusic(MIX_MAX_VOLUME * volume);
+}
+
+void play_music() {
 	g_music = Mix_LoadMUS("sound/music/laurasaidimblazed.mp3");
 	if(!g_music) {
 		slog("Failed to load music\n");
 	}
 	Mix_PlayMusic(g_music, -1);
-	atexit(free_audio);
 }
 
 void free_audio() {

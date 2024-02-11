@@ -12,6 +12,7 @@ PhysicsBody *init_wall(PhysicsWorld *world, Vector2D position, Vector2D normal, 
 	wall->moment_of_inertia = INFINITY;
 	wall->physics_material.friction = friction;
 	wall->physics_material.bounce = bounce;
+	wall->layer = ~0;
 }
 
 PhysicsBody *init_floor(PhysicsWorld *world, Vector2D position, Vector2D normal, float friction, float bounce) {

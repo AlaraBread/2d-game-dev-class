@@ -54,6 +54,7 @@ typedef struct Collision {
 
 // for PhysicsBody.tags
 #define TAG_PLAYER (1<<0)
+#define TAG_ENEMY (1<<0)
 
 typedef struct PhysicsBody_S PhysicsBody;
 typedef struct PhysicsWorld_S PhysicsWorld;
@@ -75,6 +76,8 @@ typedef struct PhysicsBody_S {
 	Collision collisions[MAX_REPORTED_COLLISIONS];
 	long int timer;
 	long int tags;
+	long int layer;
+	long int mask;
 	Sprite *sprite;
 	Vector2D sprite_offset;
 	Vector2D sprite_scale;
@@ -109,5 +112,6 @@ void drop_to_floor(PhysicsBody *body, PhysicsWorld *world);
 void physics_draw_sprites(PhysicsWorld *world);
 void physics_debug_draw(PhysicsWorld *world);
 void physics_create_test_world(PhysicsWorld *world);
+void physics_clear_bodies(PhysicsWorld *world);
 
 #endif

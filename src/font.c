@@ -17,16 +17,42 @@ void init_font() {
 	atexit(font_free);
 }
 
-void font_render(const char *text, Color color, Vector2D position, Vector2D size) {
-	int avg_size = FONT_OVERSAMPLING*((size.x+size.y)/2);
-	int font_idx = (avg_size-10)/10;
-	if(font_idx >= NUM_FONTS) {
-		font_idx = NUM_FONTS-1;
+void font_render_aligned(const char *text, int size, Color color, SDL_Rect rect, TextAlign x_align, TextAlign y_align) {
+	int w, h;
+	TTF_SizeUTF8(g_fonts_regular[size], text, &w, &h);
+	Vector2D position;
+	switch(x_align) {
+		case CENTER:
+			position.x = rect.x+(rect.w-w)/2;
+			break;
+		case START:
+			position.x = rect.x;
+			break;
+		case END:
+			position.x = rect.x+rect.w-w;
+			break;
 	}
-	SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(g_fonts_regular[font_idx], text, gfc_color_to_sdl(color), 0);
+	switch(y_align) {
+		case CENTER:
+			position.y = rect.y+(rect.h-h)/2;
+			break;
+		case START:
+			position.y = rect.y;
+			break;
+		case END:
+			position.y = rect.y+rect.h-h;
+			break;
+	}
+	font_render(text, size, color, position);
+}
+
+void font_render(const char *text, int size, Color color, Vector2D position) {
+	int w, h;
+	TTF_SizeUTF8(g_fonts_regular[size], text, &w, &h);
+	SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(g_fonts_regular[size], text, gfc_color_to_sdl(color), 0);
 	SDL_Renderer *renderer = gf2d_graphics_get_renderer();
 	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_Rect dstrect = gfc_sdl_rect(position.x, position.y, size.x, size.y);
+	SDL_Rect dstrect = gfc_sdl_rect(position.x, position.y, w, h);
 	SDL_RenderCopy(renderer, texture, NULL, &dstrect);
 	SDL_DestroyTexture(texture);
 	SDL_FreeSurface(surface);

@@ -21,7 +21,7 @@ void apply_righting(PhysicsBody *body, float delta) {
 	if(body->tags & TAG_PLAYER) {
 		body->angular_velocity -= delta*SDL_clamp(20.0*r, -10.0, 10.0);
 	} else {
-		body->angular_velocity -= delta*SDL_clamp(50.0*r, -50.0, 50.0);
+		body->angular_velocity -= delta*SDL_clamp(5.0*r, -30.0, 30.0);
 	}
 }
 
@@ -39,6 +39,8 @@ PhysicsBody *init_enemy_mosher(PhysicsWorld *world) {
 	enemy->physics_material.bounce = 0.1;
 	enemy->physics_material.friction = 1.0;
 	enemy->update = mosher_update;
+	enemy->mask = 1;
+	enemy->layer = 1;
 	return enemy;
 }
 
@@ -57,7 +59,10 @@ PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 	player->center_of_mass = vector2d(0.0, 100.0);
 	player->tags = TAG_PLAYER;
 	player->update = mosher_update;
+	player->mask = 1;
+	player->layer = 1;
 	world->player_idx = physics_get_body_id(world, player);
+	return player;
 }
 
 void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
