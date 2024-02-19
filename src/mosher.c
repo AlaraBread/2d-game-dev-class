@@ -69,12 +69,13 @@ void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	Vector2D impulse;
 	Bool skip_body = false;
 	apply_righting(body, delta);
+	Vector2D collision_point;
 	if(body->tags & TAG_PLAYER) {
 		if(!(world->mouse_buttons&1 && !world->prev_mouse_buttons&1)) {
 			skip_body = true;
 		}
 		vector2d_sub(impulse, vector2d(world->mouse_x, 0.0), body->position);
-		vector2d_scale(impulse, impulse, 1.0);
+		vector2d_add(collision_point, body->position, vector2d_rotate(body->center_of_mass, body->rotation));
 	} else {
 		skip_body = true;
 		for(int i = 0; i < MAX_REPORTED_COLLISIONS; i++) {
@@ -83,18 +84,18 @@ void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 			if(vector2d_dot_product(col->normal, vector2d(0.0, -1.0)) > 0.0 && other->physics_type == STATIC && body->timer == 0) {
 				skip_body = false;
 				body->timer = 2;
+				collision_point = col->position;
 			}
 		}
 		if(world->player_idx >= 0) {
 			vector2d_sub(impulse, vector2d(physics_get_body(world, world->player_idx)->position.x, 0.0), body->position);
 		}
-		vector2d_scale(impulse, impulse, 1.0);
 	}
 	impulse.x = impulse.x*body->mass;
 	impulse.y = body->mass*world->jump_velocity;
 	if(!skip_body) {
 		body->linear_velocity = vector2d(0.0, 0.0);
-		apply_central_impulse(body, impulse);
+		apply_impulse(body, impulse, collision_point);
 		drop_to_floor(body, world);
 		body->physics_material.bounce = 1.0;
 	} else {
