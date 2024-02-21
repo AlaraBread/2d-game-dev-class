@@ -50,7 +50,7 @@ int main(int argc, char * argv[])
 	g_rollback = init_rollback(200, 20);
 	PhysicsWorld *physics_world = rollback_cur_physics(&g_rollback);
 	float jump_interval = 60.0/160.0;
-	float jump_velocity = 1000.0;
+	float jump_velocity = 2000.0;
 	physics_world->gravity = jump_velocity/jump_interval; // hit the ground again after a certain interval
 	physics_world->jump_velocity = jump_velocity;
 
@@ -79,7 +79,7 @@ int main(int argc, char * argv[])
 		gf2d_graphics_next_frame();// render current draw frame and skip to the next frame
 
 		if (keys[SDL_SCANCODE_ESCAPE])done = 1; // exit condition
-		printf("%f\n", gf2d_graphics_get_frames_per_second());
+		//printf("%f\n", gf2d_graphics_get_frames_per_second());
 	}
 	free_rollback(&g_rollback);
 	slog("---==== END ====---");

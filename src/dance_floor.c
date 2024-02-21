@@ -23,5 +23,6 @@ void dance_floor() {
 	}
 	init_player_mosher(world);
 
-	
+	play_music();
+	set_bpm(160.0);
 }

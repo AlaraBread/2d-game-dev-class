@@ -54,7 +54,7 @@ typedef struct Collision {
 
 // for PhysicsBody.tags
 #define TAG_PLAYER (1<<0)
-#define TAG_ENEMY (1<<0)
+#define TAG_DEAD (1<<1)
 
 typedef struct PhysicsBody_S PhysicsBody;
 typedef struct PhysicsWorld_S PhysicsWorld;
@@ -74,7 +74,7 @@ typedef struct PhysicsBody_S {
 	PhysicsMaterial physics_material;
 	float gravity_scale;
 	Collision collisions[MAX_REPORTED_COLLISIONS];
-	long int timer;
+	double timer;
 	long int tags;
 	long int layer;
 	long int mask;

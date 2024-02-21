@@ -1,6 +1,8 @@
 #include "gfc_types.h"
 #include "physics.h"
 #include "mosher.h"
+#include "audio.h"
+#include "tmp_text.h"
 
 // https://stackoverflow.com/questions/4633177/how-to-wrap-a-float-to-the-interval-pi-pi
 // answer by Tim Čas
@@ -33,7 +35,7 @@ PhysicsBody *init_enemy_mosher(PhysicsWorld *world) {
 	enemy->shape.circle.radius = 40.0;
 	enemy->shape.capsule.height = 150.0;
 	enemy->center_of_mass = vector2d(0.0, 75.0);
-	enemy->mass = 20.0;
+	enemy->mass = 5.0;
 	float l = enemy->shape.capsule.height+enemy->shape.capsule.radius*2.0;
 	enemy->moment_of_inertia = enemy->mass*l*l/3.0;
 	enemy->physics_material.bounce = 0.1;
@@ -50,7 +52,7 @@ PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 	player->shape.circle.radius = 50.0;
 	player->shape.capsule.height = 200.0;
 	player->physics_type = RIGID;
-	player->mass = 30.0;
+	player->mass = 10.0;
 	float l = player->shape.capsule.height+player->shape.capsule.radius*2.0;
 	player->moment_of_inertia = player->mass*l*l/3.0;
 	player->physics_material.friction = 1.0;
@@ -66,31 +68,61 @@ PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 }
 
 void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
+	if(body->tags & TAG_DEAD) {
+		body->physics_material.bounce = 0.3;
+		body->timer -= delta;
+		if(body->timer <= 0) {
+			body->inuse = 0;
+		}
+		return;
+	}
+
 	Vector2D impulse;
 	Bool skip_body = false;
+	double beat_pos = get_beat_position();
 	apply_righting(body, delta);
-	Vector2D collision_point;
 	if(body->tags & TAG_PLAYER) {
 		if(!(world->mouse_buttons&1 && !world->prev_mouse_buttons&1)) {
 			skip_body = true;
+		} else {
+			double dist = get_beat_distance(beat_pos);
+			TextLine t;
+			int c;
+			Color color;
+			if(dist < 0.05) {
+				c = sprintf(t, "Perfect");
+				color = gfc_color(0.47, 0.85, 0.22, 1.0);
+			} else if (dist < 0.1) {
+				c = sprintf(t, "Close");
+				color = gfc_color(0.94, 0.69, 0.25, 1.0);
+			} else {
+				c = sprintf(t, "Miss");
+				color = gfc_color(0.96, 0.29, 0.21, 1.0);
+			}
+			Vector2D pos;
+			vector2d_add(pos, body->position, vector2d(0.0, -200.0));
+			init_tmp_text(t, c, pos, color);
 		}
 		vector2d_sub(impulse, vector2d(world->mouse_x, 0.0), body->position);
-		vector2d_add(collision_point, body->position, vector2d_rotate(body->center_of_mass, body->rotation));
 	} else {
 		skip_body = true;
-		for(int i = 0; i < MAX_REPORTED_COLLISIONS; i++) {
-			Collision *col = &body->collisions[i];
-			PhysicsBody *other = physics_get_body(world, col->b_idx);
-			if(vector2d_dot_product(col->normal, vector2d(0.0, -1.0)) > 0.0 && other->physics_type == STATIC && body->timer == 0) {
-				skip_body = false;
-				body->timer = 2;
-				collision_point = col->position;
-			}
+		if(beat_pos < body->timer) {
+			skip_body = false;
 		}
 		if(world->player_idx >= 0) {
 			vector2d_sub(impulse, vector2d(physics_get_body(world, world->player_idx)->position.x, 0.0), body->position);
 		}
+		if(fabs(body->rotation) > M_PI/4.0) {
+			body->tags |= TAG_DEAD;
+			body->timer = 1.0;
+			body->physics_material.bounce = 0.3;
+			body->center_of_mass = vector2d(0.0, 0.0);
+			return;
+		}
 	}
+	body->timer = beat_pos;
+	Vector2D collision_point;
+	vector2d_add(collision_point, body->position, vector2d_rotate(body->center_of_mass, body->rotation));
 	impulse.x = impulse.x*body->mass;
 	impulse.y = body->mass*world->jump_velocity;
 	if(!skip_body) {
@@ -100,6 +132,5 @@ void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		body->physics_material.bounce = 1.0;
 	} else {
 		body->physics_material.bounce = 0.3;
-		body->timer = MAX(body->timer-1, 0);
 	}
 }

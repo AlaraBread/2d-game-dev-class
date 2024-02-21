@@ -5,6 +5,9 @@
 
 Mix_Music *g_music = NULL;
 
+double g_beat_interval;
+double g_bpm;
+
 void free_audio();
 
 void init_audio() {
@@ -22,21 +25,6 @@ void init_audio() {
 	}
 	music_volume(1.0);
 	atexit(free_audio);
-
-	Mix_MusicDuration(g_music);
-	Mix_GetMusicPosition(g_music);
-}
-
-void music_volume(float volume) {
-	Mix_VolumeMusic(MIX_MAX_VOLUME * volume);
-}
-
-void play_music() {
-	g_music = Mix_LoadMUS("sound/music/laurasaidimblazed.mp3");
-	if(!g_music) {
-		slog("Failed to load music\n");
-	}
-	Mix_PlayMusic(g_music, -1);
 }
 
 void free_audio() {
@@ -44,4 +32,35 @@ void free_audio() {
 		Mix_FreeMusic(g_music);
 	}
 	Mix_CloseAudio();
+}
+
+void set_bpm(double bpm) {
+	g_bpm = bpm;
+	g_beat_interval = 60.0/bpm;
+}
+
+double get_beat_position() {
+	return fmod(Mix_GetMusicPosition(g_music), g_beat_interval);
+}
+
+double get_beat_distance(double beat_pos) {
+	if(beat_pos > g_beat_interval/2.0) {
+		return g_beat_interval-beat_pos;
+	}
+	return beat_pos;
+}
+
+void music_volume(float volume) {
+	// volume 0 causes sdl mixer to stop playing the music
+	Mix_VolumeMusic(SDL_max(MIX_MAX_VOLUME * volume, 1));
+}
+
+void play_music() {
+	g_music = Mix_LoadMUS("sound/music/laurasaidimblazed.mp3");
+	if(!g_music) {
+		slog("Failed to load music\n");
+		return;
+	}
+	Mix_PlayMusic(g_music, -1);
+	music_volume(1.0);
 }

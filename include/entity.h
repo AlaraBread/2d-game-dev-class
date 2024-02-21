@@ -20,6 +20,7 @@ typedef struct Entity_S {
 	TextAlign text_align_x;
 	TextAlign text_align_y;
 	unsigned int timer;
+	unsigned int total_timer;
 	void (*think)(struct Entity_S *self);
 	void (*update)(struct Entity_S *self);
 	void (*draw)(struct Entity_S *self);
@@ -33,6 +34,7 @@ typedef struct Entity_S {
 
 void init_entity_system(unsigned int max_entities);
 Entity *allocate_entity();
+void free_entity(Entity *ent);
 void clear_entities();
 int get_entity_id(Entity *ent);
 Entity *get_entity(int id);

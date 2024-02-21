@@ -118,6 +118,9 @@ void entity_frame() {
 		if(ent->update) {
 			ent->update(ent);
 		}
+		if(!ent->inuse) {
+			continue;
+		}
 		if(ent->draw) {
 			ent->draw(ent);
 		}
