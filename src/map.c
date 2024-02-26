@@ -10,6 +10,8 @@
 SJson *g_map = NULL;
 double *g_secondary_beats = NULL;
 unsigned int g_secondary_beats_len = 0;
+double *g_beats = NULL;
+unsigned int g_beats_len = 0;
 double g_jump_velocity = 0.0;
 const char *g_song_filename = NULL;
 
@@ -62,6 +64,39 @@ void map_load(const char *filename) {
 			g_secondary_beats[i] = v;
 		}
 		qsort(g_secondary_beats, g_secondary_beats_len, sizeof(double), double_cmp);
+	}
+	{
+		SJson *beats_obj = sj_object_get_value(g_map, "beats");
+		if(!beats_obj) {
+			slog("No beats specified");
+			map_free();
+			return;
+		}
+		if(!sj_is_array(beats_obj)) {
+			slog("beats is not an array %s", beats_obj->get_string(beats_obj));
+			map_free();
+			return;
+		}
+		SJList *beats = beats_obj->v.array;
+		unsigned int len = sj_list_get_count(beats);
+		g_beats = calloc(len, sizeof(double));
+		g_beats_len = len;
+		if(!g_beats) {
+			slog("Ran out of memory :(");
+			map_free();
+			return;
+		}
+		for(int i = 0; i < len; i++) {
+			SJson *element = sj_list_get_nth(beats, i);
+			float v;
+			if(!sj_get_float_value(element, &v)) {
+				slog("Invalid beat value %s", element->get_string(element));
+				map_free();
+				return;
+			}
+			g_beats[i] = v;
+		}
+		qsort(g_beats, g_beats_len, sizeof(double), double_cmp);
 	}
 	{
 		SJson *enemy_spawns_obj = sj_object_get_value(g_map, "enemy_spawns");
@@ -240,6 +275,10 @@ void map_free() {
 		sj_free(g_map);
 		g_map = NULL;
 	}
+	if(g_beats != NULL) {
+		free(g_beats);
+		g_beats = NULL;
+	}
 	if(g_secondary_beats != NULL) {
 		free(g_secondary_beats);
 		g_secondary_beats = NULL;
@@ -252,7 +291,7 @@ void map_free() {
 	set_bpm(0.0);
 }
 
-List *map_get_nearby_beats(double time, double distance) {
+List *map_get_nearby_secondary_beats(double time, double distance) {
 	if(!g_secondary_beats) {
 		return NULL;
 	}
@@ -260,6 +299,19 @@ List *map_get_nearby_beats(double time, double distance) {
 	for(int i = 0; i < g_secondary_beats_len; i++) {
 		if(fabs(g_secondary_beats[i] - time) <= distance) {
 			gfc_list_append(nearby, &g_secondary_beats[i]);
+		}
+	}
+	return nearby;
+}
+
+List *map_get_nearby_beats(double time, double distance) {
+	if(!g_beats) {
+		return NULL;
+	}
+	List *nearby = gfc_list_new();
+	for(int i = 0; i < g_beats_len; i++) {
+		if(fabs(g_beats[i] - time) <= distance) {
+			gfc_list_append(nearby, &g_beats[i]);
 		}
 	}
 	return nearby;

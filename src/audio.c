@@ -52,17 +52,6 @@ double get_beat_time() {
 	return Mix_GetMusicPosition(g_music) / g_beat_interval;
 }
 
-double get_beat_position() {
-	return fmod(Mix_GetMusicPosition(g_music), g_beat_interval);
-}
-
-double get_beat_distance(double beat_pos) {
-	if(beat_pos > g_beat_interval/2.0) {
-		return g_beat_interval-beat_pos;
-	}
-	return beat_pos;
-}
-
 void music_volume(float volume) {
 	// volume 0 causes sdl mixer to stop playing the music
 	Mix_VolumeMusic(SDL_max(MIX_MAX_VOLUME * volume, 1));

@@ -3,6 +3,7 @@
 #include "mosher.h"
 #include "audio.h"
 #include "tmp_text.h"
+#include "gfc_list.h"
 
 // https://stackoverflow.com/questions/4633177/how-to-wrap-a-float-to-the-interval-pi-pi
 // answer by Tim Čas
@@ -67,6 +68,34 @@ PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 	return player;
 }
 
+double get_distance_to_beat(List *beats, double beat_time) {
+	double min_dist = INFINITY;
+	unsigned int len = gfc_list_get_count(beats);
+	for(int i = 0; i < len; i++) {
+		double b = *((double *)gfc_list_get_nth(beats, i));
+		double dist = b - beat_time;
+		if(fabs(dist) < fabs(min_dist)) {
+			min_dist = dist;
+		}
+	}
+	return min_dist;
+}
+
+double get_beat_position(List *beats, double beat_time) {
+	int len = gfc_list_get_count(beats);
+	for(int i = len-1; i >= 0; i--) {
+		double b = *((double *)gfc_list_get_nth(beats, i));
+		if(beat_time > b) {
+			return beat_time-b;
+		}
+	}
+	return 0.0;
+}
+
+extern List *g_nearby_beats;
+extern List *g_nearby_secondary_beats;
+extern double g_beat_interval;
+
 void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	if(body->tags & TAG_DEAD) {
 		body->physics_material.bounce = 0.3;
@@ -79,13 +108,20 @@ void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 
 	Vector2D impulse;
 	Bool skip_body = false;
-	double beat_pos = get_beat_position();
+	double beat_time = get_beat_time();
 	apply_righting(body, delta);
 	if(body->tags & TAG_PLAYER) {
 		if(!(world->mouse_buttons&1 && !world->prev_mouse_buttons&1)) {
 			skip_body = true;
 		} else {
-			double dist = get_beat_distance(beat_pos);
+			double secondary_beat_dist = get_distance_to_beat(g_nearby_secondary_beats, beat_time);
+			double dist = fabs(get_distance_to_beat(g_nearby_beats, beat_time));
+			Bool secondary = false;
+			if(secondary_beat_dist < dist) {
+				dist = fabs(secondary_beat_dist);
+				secondary = true;
+			}
+			dist = dist*g_beat_interval;
 			TextLine t;
 			int c;
 			Color color;
@@ -99,6 +135,9 @@ void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 				c = sprintf(t, "Miss");
 				color = gfc_color(0.96, 0.29, 0.21, 1.0);
 			}
+			if(secondary) {
+				color = gfc_color(0.70, 0.36, 0.98, 1.0);
+			}
 			Vector2D pos;
 			vector2d_add(pos, body->position, vector2d(0.0, -200.0));
 			init_tmp_text(t, c, pos, color);
@@ -106,9 +145,11 @@ void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		vector2d_sub(impulse, vector2d(world->mouse_x, 0.0), body->position);
 	} else {
 		skip_body = true;
+		double beat_pos = get_beat_position(g_nearby_beats, beat_time);
 		if(beat_pos < body->timer) {
 			skip_body = false;
 		}
+		body->timer = beat_pos;
 		if(world->player_idx >= 0) {
 			vector2d_sub(impulse, vector2d(physics_get_body(world, world->player_idx)->position.x, 0.0), body->position);
 		}
@@ -122,7 +163,6 @@ void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 			return;
 		}
 	}
-	body->timer = beat_pos;
 	Vector2D collision_point;
 	vector2d_add(collision_point, body->position, vector2d_rotate(body->center_of_mass, body->rotation));
 	impulse.x = impulse.x*body->mass;

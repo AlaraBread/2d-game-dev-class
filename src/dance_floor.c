@@ -25,6 +25,16 @@ void spawn_enemy(void *data) {
 extern int g_mouse_x;
 extern int g_mouse_y;
 
+double beat_warning = 1.0;
+void draw_beat(void *data) {
+	double beat_time = *((double *)data);
+	Vector2D center = vector2d(g_mouse_x, g_mouse_y);
+	double delta = beat_time - get_beat_time();
+	center.x -= delta * 100.0;
+	Color color = gfc_color(0.0, 1.0, 0.0, 1.0-fabs(delta)/beat_warning);
+	gf2d_draw_circle(center, 10, color);
+}
+
 double secondary_beat_warning = 2.0;
 void draw_secondary_beat(void *data) {
 	double beat_time = *((double *)data);
@@ -35,18 +45,23 @@ void draw_secondary_beat(void *data) {
 	gf2d_draw_circle(center, 10, color);
 }
 
-void dance_floor_update(Entity *ent) {
+List *g_nearby_beats;
+List *g_nearby_secondary_beats;
+void dance_floor_think(Entity *ent) {
 	double beat_pos = get_beat_time();
 	List *spawns = map_get_spawns(beat_pos);
 	gfc_list_foreach(spawns, spawn_enemy);
 
-	List *secondary_beats = map_get_nearby_beats(beat_pos, secondary_beat_warning);
-	gfc_list_foreach(secondary_beats, draw_secondary_beat);
+	g_nearby_beats = map_get_nearby_beats(beat_pos, beat_warning);
+	gfc_list_foreach(g_nearby_beats, draw_beat);
+
+	g_nearby_secondary_beats = map_get_nearby_secondary_beats(beat_pos, secondary_beat_warning);
+	gfc_list_foreach(g_nearby_secondary_beats, draw_secondary_beat);
 }
 
 void create_dance_floor_entity() {
 	Entity *ent = allocate_entity();
-	ent->update = dance_floor_update;
+	ent->think = dance_floor_think;
 }
 
 void dance_floor() {
