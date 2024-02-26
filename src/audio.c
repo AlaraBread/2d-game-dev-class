@@ -2,6 +2,7 @@
 #include <SDL_mixer.h>
 #include "simple_logger.h"
 #include "gfc_types.h"
+#include "rollback.h"
 
 Mix_Music *g_music = NULL;
 
@@ -34,9 +35,21 @@ void free_audio() {
 	Mix_CloseAudio();
 }
 
+extern Rollback *g_rollback;
+extern double g_jump_velocity;
+
 void set_bpm(double bpm) {
 	g_bpm = bpm;
 	g_beat_interval = 60.0/bpm;
+
+	PhysicsWorld *physics_world = rollback_cur_physics(&g_rollback);
+	float jump_velocity = g_jump_velocity;
+	physics_world->gravity = jump_velocity/g_beat_interval;
+	physics_world->jump_velocity = jump_velocity;
+}
+
+double get_beat_time() {
+	return Mix_GetMusicPosition(g_music) / g_beat_interval;
 }
 
 double get_beat_position() {
@@ -55,8 +68,12 @@ void music_volume(float volume) {
 	Mix_VolumeMusic(SDL_max(MIX_MAX_VOLUME * volume, 1));
 }
 
+extern const char *g_song_filename;
 void play_music() {
-	g_music = Mix_LoadMUS("sound/music/laurasaidimblazed.mp3");
+	if(!g_song_filename) {
+		return;
+	}
+	g_music = Mix_LoadMUS(g_song_filename);
 	if(!g_music) {
 		slog("Failed to load music\n");
 		return;

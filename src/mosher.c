@@ -57,7 +57,7 @@ PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 	player->moment_of_inertia = player->mass*l*l/3.0;
 	player->physics_material.friction = 1.0;
 	player->physics_material.bounce = 1.0;
-	player->position = vector2d(100.0, 200.0);
+	player->position = vector2d(600.0, 200.0);
 	player->center_of_mass = vector2d(0.0, 100.0);
 	player->tags = TAG_PLAYER;
 	player->update = mosher_update;
@@ -117,6 +117,8 @@ void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 			body->timer = 1.0;
 			body->physics_material.bounce = 0.3;
 			body->center_of_mass = vector2d(0.0, 0.0);
+			body->layer = 0;
+			body->mask = 2;
 			return;
 		}
 	}

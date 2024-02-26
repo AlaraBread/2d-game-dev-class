@@ -624,13 +624,16 @@ void physics_debug_draw(PhysicsWorld *world) {
 				Vector2D end;
 				vector2d_add(start, body->position, tangent);
 				vector2d_sub(end, body->position, tangent);
-				
+
 				gf2d_draw_line(start, end, gfc_color(0.0, 1.0, 1.0, 1.0));
 				break;
 			}
 			case CAPSULE:
 			{
 				Color color = gfc_color(1.0, 1.0, 1.0, 1.0);
+				if(body->tags & TAG_DEAD) {
+					color.a = body->timer;
+				}
 				Vector2D top_circle = vector2d_rotate(vector2d(0.0, body->shape.capsule.height/2.0), body->rotation);
 				vector2d_add(top_circle, body->position, top_circle);
 				Vector2D bottom_circle = vector2d_rotate(vector2d(0.0, -body->shape.capsule.height/2.0), body->rotation);
@@ -652,7 +655,7 @@ void physics_debug_draw(PhysicsWorld *world) {
 
 				Vector2D com;
 				vector2d_add(com, body->position, vector2d_rotate(body->center_of_mass, body->rotation));
-				gf2d_draw_circle(com, 20, gfc_color(1.0, 1.0, 0.0, 1.0));
+				gf2d_draw_circle(com, 20, gfc_color(1.0, 1.0, 0.0, color.a));
 				break;
 			}
 			default:

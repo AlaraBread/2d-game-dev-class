@@ -48,11 +48,6 @@ int main(int argc, char * argv[])
 
 	// physics setup
 	g_rollback = init_rollback(200, 20);
-	PhysicsWorld *physics_world = rollback_cur_physics(&g_rollback);
-	float jump_interval = 60.0/160.0;
-	float jump_velocity = 2000.0;
-	physics_world->gravity = jump_velocity/jump_interval; // hit the ground again after a certain interval
-	physics_world->jump_velocity = jump_velocity;
 
 	main_menu(&g_rollback);
 

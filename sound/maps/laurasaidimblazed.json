@@ -1,0 +1,74 @@
+{
+	"bpm": 160.0,
+	"jump_velocity": 2000.0,
+	"song": "sound/music/laurasaidimblazed.mp3",
+	"secondary_beats": [
+		9.5, 10.5
+	],
+	"enemy_spawns": [
+		{
+			"time": 3.0,
+			"type": 0,
+			"position_x": 300.0,
+			"position_y": 100.0,
+			"velocity_x": 400.0,
+			"velocity_y": 400.0
+		},
+		{
+			"time": 7.0,
+			"type": 0,
+			"position_x": 900.0,
+			"position_y": 100.0,
+			"velocity_x": -400.0,
+			"velocity_y": 400.0
+		},
+		{
+			"time": 11.0,
+			"type": 0,
+			"position_x": 300.0,
+			"position_y": 100.0,
+			"velocity_x": 400.0,
+			"velocity_y": 400.0
+		},
+		{
+			"time": 15.0,
+			"type": 0,
+			"position_x": 900.0,
+			"position_y": 100.0,
+			"velocity_x": -400.0,
+			"velocity_y": 400.0
+		},
+		{
+			"time": 19.0,
+			"type": 0,
+			"position_x": 300.0,
+			"position_y": 100.0,
+			"velocity_x": 400.0,
+			"velocity_y": 400.0
+		},
+		{
+			"time": 20.0,
+			"type": 0,
+			"position_x": 900.0,
+			"position_y": 100.0,
+			"velocity_x": -400.0,
+			"velocity_y": 400.0
+		},
+		{
+			"time": 21.0,
+			"type": 0,
+			"position_x": 300.0,
+			"position_y": 100.0,
+			"velocity_x": 400.0,
+			"velocity_y": 400.0
+		},
+		{
+			"time": 21.5,
+			"type": 0,
+			"position_x": 900.0,
+			"position_y": 100.0,
+			"velocity_x": -400.0,
+			"velocity_y": 400.0
+		}
+	]
+}
