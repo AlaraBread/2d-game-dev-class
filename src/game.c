@@ -9,6 +9,7 @@
 #include "font.h"
 #include "entity.h"
 #include "main_menu.h"
+#include "points.h"
 
 Rollback g_rollback;
 
@@ -45,11 +46,12 @@ int main(int argc, char * argv[])
 	init_entity_system(500);
 	init_audio();
 	init_font();
+	init_points();
 
 	// physics setup
 	g_rollback = init_rollback(200, 20);
 
-	main_menu(&g_rollback);
+	main_menu();
 
 	g_prev_mouse_buttons = 0;
 

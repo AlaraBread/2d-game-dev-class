@@ -17,6 +17,7 @@ typedef struct Entity_S {
 	Vector2D position;
 	Vector2D size;
 	int font_size;
+	int index;
 	TextAlign text_align_x;
 	TextAlign text_align_y;
 	unsigned int timer;
@@ -43,5 +44,7 @@ void button_mouse_enter(Entity *button);
 void button_mouse_exit(Entity *button);
 void button_mouse_down(Entity *button);
 void button_mouse_up(Entity *button);
+Entity *create_button(Vector2D position, Vector2D size, char *text);
+Entity *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y, char *text);
 
 #endif

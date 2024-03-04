@@ -159,3 +159,34 @@ void draw_text_rect(Entity *ent) {
 			sdl_rect(ent->position.x, ent->position.y, ent->size.x, ent->size.y),
 			ent->text_align_x, ent->text_align_y);
 }
+
+Entity *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y, char *text) {
+	Entity *label = allocate_entity();
+	label->text_align_x = text_align_x;
+	label->text_align_y = text_align_y;
+	label->position = position;
+	strcpy(label->text, text);
+	label->font_size = 2;
+	label->color = gfc_color(1.0, 1.0, 1.0, 1.0);
+	label->draw = draw_text_rect;
+	return label;
+}
+
+Entity *create_button(Vector2D position, Vector2D size, char *text) {
+	Entity *button = allocate_entity();
+	button->bg_color = gfc_color(0.1, 0.1, 0.1, 1.0);
+	button->border_color = gfc_color(1.0, 1.0, 1.0, 1.0);
+	button->color = gfc_color(1.0, 1.0, 1.0, 1.0);
+	button->draw = draw_text_rect;
+	button->mouse_enter = button_mouse_enter;
+	button->mouse_exit = button_mouse_exit;
+	button->mouse_down = button_mouse_down;
+	button->mouse_up = button_mouse_up;
+	button->position = vector2d(position.x-size.x/2, position.y-size.y/2);
+	button->size = size;
+	button->font_size = 5;
+	button->text_align_x = CENTER;
+	button->text_align_y = CENTER;
+	memcpy(button->text, text, strlen(text)+1);
+	return button;
+}
