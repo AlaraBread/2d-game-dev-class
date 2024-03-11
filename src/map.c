@@ -14,6 +14,7 @@ double *g_beats = NULL;
 unsigned int g_beats_len = 0;
 double g_jump_velocity = 0.0;
 const char *g_song_filename = NULL;
+int g_high_score = 0;
 
 EnemySpawn *g_enemy_spawns;
 unsigned int g_enemy_spawns_len;
@@ -261,6 +262,17 @@ void map_load(const char *filename) {
 		if(!g_song_filename) {
 			slog("Invalid song %s", song->get_string(song));
 			map_free();
+			return;
+		}
+	}
+	{
+		SJson *high_score = sj_object_get_value(g_map, "high_score");
+		if(!high_score) {
+			g_high_score = 0;
+			return;
+		}
+		if(!sj_get_integer_value(high_score, &g_high_score)) {
+			g_high_score = 0;
 			return;
 		}
 	}

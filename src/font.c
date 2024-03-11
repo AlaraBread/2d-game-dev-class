@@ -12,7 +12,7 @@ TTF_Font *g_fonts_regular[NUM_FONTS];
 void init_font() {
 	TTF_Init();
 	for(int i = 0; i < NUM_FONTS; i++) {
-		g_fonts_regular[i] = TTF_OpenFont("fonts/RuslanDisplay-Regular.ttf", i*10+10);
+		g_fonts_regular[i] = TTF_OpenFont("fonts/MadimiOne-Regular.ttf", i*10+10);
 	}
 	atexit(font_free);
 }

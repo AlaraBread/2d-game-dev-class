@@ -1,3 +1,4 @@
+#include <SDL.h>
 #include "rollback.h"
 #include "physics.h"
 #include "wall.h"
@@ -7,6 +8,11 @@
 #include "entity.h"
 #include "audio.h"
 #include "gf2d_draw.h"
+#include "simple_json_list.h"
+#include "simple_json.h"
+#include "simple_json_object.h"
+#include "points.h"
+#include "pause.h"
 
 extern Rollback g_rollback;
 
@@ -45,6 +51,10 @@ void draw_secondary_beat(void *data) {
 	gf2d_draw_circle(center, 10, color);
 }
 
+extern const Uint8 *g_keys;
+extern Uint8 g_prev_keys[SDL_NUM_SCANCODES];
+extern Bool g_paused;
+
 List *g_nearby_beats;
 List *g_nearby_secondary_beats;
 void dance_floor_think(Entity *ent) {
@@ -57,18 +67,46 @@ void dance_floor_think(Entity *ent) {
 
 	g_nearby_secondary_beats = map_get_nearby_secondary_beats(beat_pos, secondary_beat_warning);
 	gfc_list_foreach(g_nearby_secondary_beats, draw_secondary_beat);
+
+	if((g_keys[SDL_SCANCODE_P] && !g_prev_keys[SDL_SCANCODE_P]) ||
+			(g_keys[SDL_SCANCODE_ESCAPE] && !g_prev_keys[SDL_SCANCODE_ESCAPE])) {
+		toggle_paused();
+	}
 }
 
-void create_dance_floor_entity() {
+extern int g_level_points;
+void dance_floor_cleanup(Entity *dance_floor) {
+	SJson *file = sj_load(dance_floor->filename);
+	int stored_high_score;
+	if(!sj_get_integer_value(sj_object_get_value(file, "high_score"), &stored_high_score)) {
+		stored_high_score = -1;
+	}
+	if(stored_high_score < g_level_points) {
+		sj_object_delete_key(file, "high_score");
+		sj_object_insert(file, "high_score", sj_new_int(g_level_points));
+		sj_save(file, dance_floor->filename);
+	}
+	sj_free(file);
+}
+
+Entity *create_dance_floor_entity() {
 	Entity *ent = allocate_entity();
 	ent->think = dance_floor_think;
+	ent->cleanup = dance_floor_cleanup;
+	return ent;
 }
 
-void dance_floor() {
+extern int g_level_points;
+long int g_prev_points = -1;
+
+void dance_floor(char *map_filename) {
 	PhysicsWorld *world = rollback_cur_physics(&g_rollback);
 	physics_clear_bodies(world);
 	clear_entities();
-	create_dance_floor_entity();
+	Entity *dance_floor_entity = create_dance_floor_entity();
+	strcpy(dance_floor_entity->filename, map_filename);
+	g_level_points = 0;
+	create_points_label();
 
 	float f = 1.0;
 	float b = 0.8;
@@ -79,7 +117,6 @@ void dance_floor() {
 
 	init_player_mosher(world);
 
-	map_load("sound/maps/laurasaidimblazed.json");
-
+	map_load(map_filename);
 	play_music();
 }

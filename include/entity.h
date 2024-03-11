@@ -7,9 +7,12 @@
 
 #define MAX_ENTITY_SPRITES 3
 
+#define UI_GROUP_PAUSE_MENU 1
+
 typedef struct Entity_S {
 	Bool inuse;
 	TextLine text;
+	char filename[512];
 	Color color;
 	Color bg_color;
 	Color border_color;
@@ -18,6 +21,8 @@ typedef struct Entity_S {
 	Vector2D size;
 	int font_size;
 	int index;
+	int group;
+	Bool new;
 	TextAlign text_align_x;
 	TextAlign text_align_y;
 	unsigned int timer;
@@ -37,6 +42,7 @@ void init_entity_system(unsigned int max_entities);
 Entity *allocate_entity();
 void free_entity(Entity *ent);
 void clear_entities();
+void clear_ui_group(int group);
 int get_entity_id(Entity *ent);
 Entity *get_entity(int id);
 void draw_text_rect(Entity *ent);
@@ -45,6 +51,6 @@ void button_mouse_exit(Entity *button);
 void button_mouse_down(Entity *button);
 void button_mouse_up(Entity *button);
 Entity *create_button(Vector2D position, Vector2D size, char *text);
-Entity *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y, char *text);
+Entity *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y);
 
 #endif

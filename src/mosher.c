@@ -22,7 +22,7 @@ double wrapMinMax(double x, double min, double max)
 void apply_righting(PhysicsBody *body, float delta) {
 	float r = wrapMinMax(body->rotation, -M_PI, M_PI);
 	if(body->tags & TAG_PLAYER) {
-		body->angular_velocity -= delta*SDL_clamp(20.0*r, -10.0, 10.0);
+		body->angular_velocity -= delta*SDL_clamp(10.0*r, -5.0, 5.0);
 	} else {
 		body->angular_velocity -= delta*SDL_clamp(5.0*r, -30.0, 30.0);
 	}
@@ -36,7 +36,7 @@ PhysicsBody *init_enemy_mosher(PhysicsWorld *world) {
 	enemy->shape.circle.radius = 40.0;
 	enemy->shape.capsule.height = 150.0;
 	enemy->center_of_mass = vector2d(0.0, 75.0);
-	enemy->mass = 5.0;
+	enemy->mass = 10.0;
 	float l = enemy->shape.capsule.height+enemy->shape.capsule.radius*2.0;
 	enemy->moment_of_inertia = enemy->mass*l*l/3.0;
 	enemy->physics_material.bounce = 0.1;
@@ -95,6 +95,8 @@ double get_beat_position(List *beats, double beat_time) {
 extern List *g_nearby_beats;
 extern List *g_nearby_secondary_beats;
 extern double g_beat_interval;
+extern int g_points;
+extern int g_level_points;
 
 void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	if(body->tags & TAG_DEAD) {
@@ -125,12 +127,15 @@ void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 			TextLine t;
 			int c;
 			Color color;
+			int p = 0;
 			if(dist < 0.05) {
 				c = sprintf(t, "Perfect");
 				color = gfc_color(0.47, 0.85, 0.22, 1.0);
+				p = 3;
 			} else if (dist < 0.1) {
 				c = sprintf(t, "Close");
 				color = gfc_color(0.94, 0.69, 0.25, 1.0);
+				p = 1;
 			} else {
 				c = sprintf(t, "Miss");
 				color = gfc_color(0.96, 0.29, 0.21, 1.0);
@@ -138,6 +143,8 @@ void mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 			if(secondary) {
 				color = gfc_color(0.70, 0.36, 0.98, 1.0);
 			}
+			g_level_points += p;
+			g_points += p;
 			Vector2D pos;
 			vector2d_add(pos, body->position, vector2d(0.0, -200.0));
 			init_tmp_text(t, c, pos, color);

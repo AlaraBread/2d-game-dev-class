@@ -70,3 +70,15 @@ void play_music() {
 	Mix_PlayMusic(g_music, -1);
 	music_volume(1.0);
 }
+
+void stop_music() {
+	Mix_HaltMusic();
+}
+
+void pause_music() {
+	Mix_PauseMusic();
+}
+
+void resume_music() {
+	Mix_ResumeMusic();
+}

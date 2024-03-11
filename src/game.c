@@ -15,19 +15,20 @@ Rollback g_rollback;
 
 Uint32 g_prev_mouse_buttons;
 Uint32 g_mouse_buttons;
+const Uint8 *g_keys;
+Uint8 g_prev_keys[SDL_NUM_SCANCODES];
 
 int g_mouse_x;
 int g_mouse_y;
-int g_old_mouse_x;
-int g_old_mouse_y;
+int g_prev_mouse_x;
+int g_prev_mouse_y;
+
+extern Bool g_paused;
 
 void run_physics_frame();
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
-	int done = 0;
-	const Uint8 * keys;
-	
 	/*program initializtion*/
 	init_logger("gf2d.log",0);
 	slog("---==== BEGIN ====---");
@@ -56,10 +57,27 @@ int main(int argc, char * argv[])
 	g_prev_mouse_buttons = 0;
 
 	/*main game loop*/
-	while(!done)
+	while(1)
 	{
-		SDL_PumpEvents();	// update SDL's internal event structures
-		keys = SDL_GetKeyboardState(NULL); // get the keyboard state for this frame
+		Bool done = false;
+		SDL_Event event;
+		while(SDL_PollEvent(&event)) {
+			switch(event.type) {
+				case SDL_WINDOWEVENT: {
+					switch (event.window.event) {
+						case SDL_WINDOWEVENT_CLOSE:   // exit game
+							done = true;
+							break;
+					}
+					break;
+				}
+			}
+		}
+		if(done) {
+			break;
+		}
+		int num_keys;
+		g_keys = SDL_GetKeyboardState(&num_keys); // get the keyboard state for this frame
 		/*update things here*/
 
 		g_mouse_buttons = SDL_GetMouseState(&g_mouse_x, &g_mouse_y);
@@ -70,15 +88,15 @@ int main(int argc, char * argv[])
 		entity_frame();
 
 		g_prev_mouse_buttons = g_mouse_buttons;
-		g_old_mouse_x = g_mouse_x;
-		g_old_mouse_y = g_mouse_y;
+		g_prev_mouse_x = g_mouse_x;
+		g_prev_mouse_y = g_mouse_y;
+		memcpy(g_prev_keys, g_keys, num_keys*sizeof(Uint8));
 
 		gf2d_graphics_next_frame();// render current draw frame and skip to the next frame
-
-		if (keys[SDL_SCANCODE_ESCAPE])done = 1; // exit condition
 		//printf("%f\n", gf2d_graphics_get_frames_per_second());
 	}
 	free_rollback(&g_rollback);
+	save_points();
 	slog("---==== END ====---");
 	return 0;
 }
@@ -91,7 +109,9 @@ void run_physics_frame() {
 	physics_world->prev_mouse_buttons = g_prev_mouse_buttons;
 	physics_world->mouse_buttons = g_mouse_buttons;
 
-	physics_world = rollback_step(&g_rollback, 0.016);
+	if(!g_paused) {
+		physics_world = rollback_step(&g_rollback, 0.016);
+	}
 
 	physics_debug_draw(physics_world);
 	physics_draw_sprites(physics_world);

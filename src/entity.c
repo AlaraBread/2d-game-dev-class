@@ -32,6 +32,7 @@ Entity *allocate_entity() {
 			Entity *entity = &g_entities[i];
 			memset(entity, 0, sizeof(Entity));
 			entity->inuse = true;
+			entity->new = true;
 			return entity;
 		}
 	}
@@ -41,6 +42,15 @@ Entity *allocate_entity() {
 void clear_entities() {
 	for(int i = 0; i < g_max_entities; i++) free_entity(&g_entities[i]);
 	memset(g_entities, 0, sizeof(Entity) * g_max_entities);
+}
+
+void clear_ui_group(int group) {
+	for(int i = 0; i < g_max_entities; i++) {
+		Entity *ent = &g_entities[i];
+		if(ent->group == group) {
+			free_entity(ent);
+		}
+	}
 }
 
 void free_entity(Entity *ent) {
@@ -57,8 +67,8 @@ extern Uint32 g_prev_mouse_buttons;
 extern Uint32 g_mouse_buttons;
 extern int g_mouse_x;
 extern int g_mouse_y;
-extern int g_old_mouse_x;
-extern int g_old_mouse_y;
+extern int g_prev_mouse_x;
+extern int g_prev_mouse_y;
 
 Bool entity_rect_test(Entity *ent, int x, int y) {
 	return x > ent->position.x && x < ent->position.x+ent->size.x &&
@@ -70,8 +80,12 @@ void entity_mouse_events(Entity *ent) {
 		return;
 	}
 	Bool is_in_rect = entity_rect_test(ent, g_mouse_x, g_mouse_y);
-	Bool was_in_rect = entity_rect_test(ent, g_old_mouse_x, g_old_mouse_y);
-	
+	Bool was_in_rect = entity_rect_test(ent, g_prev_mouse_x, g_prev_mouse_y);
+	if(ent->new) {
+		was_in_rect = false;
+		ent->new = false;
+	}
+
 	if(ent->mouse_enter && is_in_rect && !was_in_rect) {
 		ent->mouse_enter(ent);
 	}
@@ -155,17 +169,18 @@ void draw_text_rect(Entity *ent) {
 	Rect rect = gfc_rect(ent->position.x, ent->position.y, ent->size.x, ent->size.y);
 	gf2d_draw_rect_filled(rect, ent->bg_color);
 	gf2d_draw_rect(rect, ent->border_color);
-	font_render_aligned(ent->text, ent->font_size, ent->color,
-			sdl_rect(ent->position.x, ent->position.y, ent->size.x, ent->size.y),
-			ent->text_align_x, ent->text_align_y);
+	if(ent->text[0] != 0) {
+		font_render_aligned(ent->text, ent->font_size, ent->color,
+				sdl_rect(ent->position.x, ent->position.y, ent->size.x, ent->size.y),
+				ent->text_align_x, ent->text_align_y);
+	}
 }
 
-Entity *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y, char *text) {
+Entity *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y) {
 	Entity *label = allocate_entity();
 	label->text_align_x = text_align_x;
 	label->text_align_y = text_align_y;
 	label->position = position;
-	strcpy(label->text, text);
 	label->font_size = 2;
 	label->color = gfc_color(1.0, 1.0, 1.0, 1.0);
 	label->draw = draw_text_rect;
