@@ -55,6 +55,7 @@ typedef struct Collision {
 // for PhysicsBody.tags
 #define TAG_PLAYER (1<<0)
 #define TAG_DEAD (1<<1)
+#define TAG_ENEMY (1<<2)
 
 typedef struct PhysicsBody_S PhysicsBody;
 typedef struct PhysicsWorld_S PhysicsWorld;

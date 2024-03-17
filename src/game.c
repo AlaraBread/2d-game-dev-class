@@ -10,6 +10,7 @@
 #include "entity.h"
 #include "main_menu.h"
 #include "points.h"
+#include "save.h"
 
 Rollback g_rollback;
 
@@ -47,7 +48,7 @@ int main(int argc, char *argv[])
 	init_entity_system(500);
 	init_audio();
 	init_font();
-	init_points();
+	init_save();
 
 	// physics setup
 	g_rollback = init_rollback(200, 20);
@@ -96,12 +97,14 @@ int main(int argc, char *argv[])
 		//printf("%f\n", gf2d_graphics_get_frames_per_second());
 	}
 	free_rollback(&g_rollback);
-	save_points();
+	save();
 	slog("---==== END ====---");
 	return 0;
 }
 
 void run_physics_frame() {
+	audio_tick();
+
 	PhysicsWorld *physics_world = rollback_cur_physics(&g_rollback);
 
 	physics_world->mouse_x = g_mouse_x;

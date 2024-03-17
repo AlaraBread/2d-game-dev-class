@@ -9,5 +9,6 @@ void play_music();
 void pause_music();
 void resume_music();
 void stop_music();
+void audio_tick();
 
 #endif

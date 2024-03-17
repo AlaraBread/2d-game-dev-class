@@ -10,21 +10,19 @@
 #
 
 # Linux
-PROJECT = gf2d
+PROJECT = moshing_simulator
 CC      = gcc
 
-LIB_LIST = ../gfc/libs/libgfc.a ../gfc/simple_json/libs/libsj.a ../gfc/simple_logger/libs/libsl.a 
-OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
+LIB_LIST = ../gfc/libs/libgfc.a ../gfc/simple_json/libs/libsj.a ../gfc/simple_logger/libs/libsl.a ../soloud/lib/libsoloud_static.a
+OBJECTS = $(patsubst %.c,%.o,$(shell find . -name "*.c")) ../soloud/src/c_api/soloud_c.o
 
-INC_PATHS = ../include ../gfc/include ../gfc/simple_logger/include ../gfc/simple_json/include
+INC_PATHS = ../include ../gfc/include ../gfc/simple_logger/include ../gfc/simple_json/include ../soloud/include
 INC_PARAMS =$(foreach d, $(INC_PATHS), -I$d)
 
-OBJECTS = $(patsubst %.c,%.o,$(wildcard *.c))
-
 SDL_CFLAGS = `sdl2-config --cflags` $(INC_PARAMS)
-SDL_LDFLAGS = `sdl2-config --libs` -lSDL2_image -lSDL2_mixer -lSDL2_ttf -lpng -ljpeg -lz -lm
+SDL_LDFLAGS = `sdl2-config --libs` -lSDL2_image -lSDL2_ttf -lpng -ljpeg -lz -lm -lpthread -ldl -lasound -lstdc++
 LFLAGS = -g  -o ../$(PROJECT)
-CFLAGS = -g  -fPIC -Wall -pedantic -std=gnu99 -fgnu89-inline -Wno-unknown-pragmas -Wno-variadic-macros
+CFLAGS = -g  -fPIC -Wall -std=gnu99 -fgnu89-inline -Wno-unknown-pragmas -Wno-variadic-macros
 
 DOXYGEN = doxygen
 
@@ -39,8 +37,7 @@ docs:
 	$(DOXYGEN) doxygen.cfg
 
 sources:
-	echo (patsubst %.c,%.o,$(wildcard *.c)) > makefile.sources
-
+	echo (patsubst %.c,%.o,$(shell find . -name "*.c")) > makefile.sources
 
 makefile.dep: depend
 
@@ -52,7 +49,7 @@ depend:
 	@echo Done.
 
 clean:
-	rm *.o
+	rm $(shell find . -name "*.o")
 
 count:
 	wc -l *.c $(foreach d, $(INC_PATHS), $d/*.h) makefile
@@ -67,7 +64,7 @@ include makefile.dep
 # The default rule.
 #
 
-.c.o:
-	$(CC) $(CFLAGS) $(SDL_CFLAGS) -c $<
+%.o: %.c
+	$(CC) $(CFLAGS) $(SDL_CFLAGS) -c $< -o $(patsubst %.c, %.o, $<)
 
 

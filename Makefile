@@ -1,17 +1,18 @@
 .DEFAULT_GOAL := all
 all:
-	make -C ./gfc/src
-	make -C ./gfc/src static
-	make -C ./gfc/simple_json/src
-	make -C ./gfc/simple_json/src static
-	make -C ./gfc/simple_logger/src
-	make -C ./gfc/simple_logger/src static
-	make -C ./src
+	@${MAKE} -C ./gfc/src
+	@${MAKE} -C ./gfc/src static
+	@${MAKE} -C ./gfc/simple_json/src
+	@${MAKE} -C ./gfc/simple_json/src static
+	@${MAKE} -C ./gfc/simple_logger/src
+	@${MAKE} -C ./gfc/simple_logger/src static
+	@${MAKE} -C ./soloud/build/gmake
+	@${MAKE} -C ./src
 
 run:
-	make all
-	./gf2d
+	@${MAKE} all
+	./moshing_simulator
 
 grind:
-	make all
-	valgrind --tool=callgrind ./gf2d
+	@${MAKE} all
+	valgrind --tool=callgrind ./moshing_simulator
