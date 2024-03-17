@@ -10,5 +10,7 @@ void pause_music();
 void resume_music();
 void stop_music();
 void audio_tick();
+void set_music_speed(double speed);
+double get_music_speed();
 
 #endif

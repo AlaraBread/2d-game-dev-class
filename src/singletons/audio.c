@@ -3,6 +3,7 @@
 #include "gfc_types.h"
 #include "rollback.h"
 #include "soloud_c.h"
+#include "audio.h"
 
 double g_beat_interval = 0.0;
 double g_bpm = 0.0;
@@ -38,7 +39,7 @@ void set_bpm(double bpm) {
 }
 
 double get_beat_time() {
-	return g_filtered_music_time_seconds / g_beat_interval;
+	return get_music_speed() * g_filtered_music_time_seconds / g_beat_interval;
 }
 
 void music_volume(float volume) {
@@ -66,6 +67,8 @@ void play_music() {
 
 	g_music_voice_handle = Soloud_play(g_soloud, g_music);
 
+	g_filtered_music_time_seconds = 0.0;
+
 	music_volume(1.0);
 }
 
@@ -84,6 +87,16 @@ void pause_music() {
 
 void resume_music() {
 	Soloud_setPause(g_soloud, g_music_voice_handle, false);
+}
+
+double g_music_speed;
+void set_music_speed(double speed) {
+	g_music_speed = speed;
+	Soloud_setRelativePlaySpeed(g_soloud, g_music_voice_handle, speed);
+}
+
+double get_music_speed() {
+	return g_music_speed;
 }
 
 void audio_tick() {

@@ -23,7 +23,7 @@ double wrapMinMax(double x, double min, double max)
 void apply_righting(PhysicsBody *body, float delta) {
 	float r = wrapMinMax(body->rotation, -M_PI, M_PI);
 	if(body->tags & TAG_PLAYER) {
-		body->angular_velocity -= delta*SDL_clamp(5.0*r, -5.0, 5.0);
+		body->angular_velocity -= delta*SDL_clamp(10.0*r, -10.0, 10.0);
 	} else {
 		body->angular_velocity -= delta*SDL_clamp(5.0*r, -30.0, 30.0);
 	}
@@ -63,7 +63,7 @@ PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 	player->shape.circle.radius = 50.0;
 	player->shape.capsule.height = 200.0;
 	player->physics_type = RIGID;
-	player->mass = 10.0;
+	player->mass = 20.0;
 	if(g_selected_powerup == TALL) {
 		player->mass *= 0.75;
 		player->shape.capsule.height *= 2;
@@ -182,6 +182,8 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		return;
 	}
 
+	printf("%lf\n", beat_time);
+
 	double secondary_beat_dist = get_distance_to_beat(g_nearby_secondary_beats, beat_time);
 	double dist = fabs(get_distance_to_beat(g_nearby_beats, beat_time));
 	Bool secondary = false;
@@ -195,15 +197,15 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	Color color;
 	int p = 0;
 	if(dist < 0.05) {
-		c = sprintf(t, "Perfect");
+		c = sprintf(t, "perfect");
 		color = gfc_color(0.47, 0.85, 0.22, 1.0);
 		p = 3;
 	} else if (dist < 0.1) {
-		c = sprintf(t, "Close");
+		c = sprintf(t, "close");
 		color = gfc_color(0.94, 0.69, 0.25, 1.0);
 		p = 1;
 	} else {
-		c = sprintf(t, "Miss");
+		c = sprintf(t, "miss");
 		color = gfc_color(0.96, 0.29, 0.21, 1.0);
 	}
 	if(secondary) {

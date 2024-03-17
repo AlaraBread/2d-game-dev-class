@@ -507,7 +507,6 @@ PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate) {
 		world.physics_bodies = NULL;
 	}
 	world.last_allocated_body = max_physics_bodies-1;
-	world.gravity = 400.0;
 	world.floor_idx = -1;
 	world.player_idx = -1;
 	return world;

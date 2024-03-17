@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 	init_entity_system(500);
 	init_audio();
 	init_font();
-	init_save();
+	load();
 
 	// physics setup
 	g_rollback = init_rollback(200, 20);

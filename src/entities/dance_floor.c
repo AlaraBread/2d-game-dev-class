@@ -13,6 +13,7 @@
 #include "simple_json_object.h"
 #include "points.h"
 #include "pause.h"
+#include "mods.h"
 
 extern Rollback g_rollback;
 
@@ -33,11 +34,12 @@ void spawn_enemy(void *data) {
 
 extern int g_mouse_x;
 extern int g_mouse_y;
+Entity *g_dance_floor;
 
-double beat_warning = 1.0;
+double beat_warning = 3.0;
 void draw_beat(void *data) {
 	double beat_time = *((double *)data);
-	Vector2D center = vector2d(g_mouse_x, g_mouse_y);
+	Vector2D center = g_dance_floor->position;
 	double delta = beat_time - get_beat_time();
 	center.x -= delta * 100.0;
 	Color color = gfc_color(1.0, 1.0, 1.0, 1.0-fabs(delta)/beat_warning);
@@ -47,7 +49,7 @@ void draw_beat(void *data) {
 double secondary_beat_warning = 2.0;
 void draw_secondary_beat(void *data) {
 	double beat_time = *((double *)data);
-	Vector2D center = vector2d(g_mouse_x, g_mouse_y);
+	Vector2D center = g_dance_floor->position;
 	double delta = beat_time - get_beat_time();
 	center.y -= delta * 100.0;
 	Color color = gfc_color(1.0, 0.0, 1.0, 1.0-fabs(delta)/secondary_beat_warning);
@@ -77,6 +79,10 @@ extern Bool g_paused;
 List *g_nearby_beats;
 List *g_nearby_secondary_beats;
 void dance_floor_think(Entity *ent) {
+	if(!g_paused) {
+		ent->position.x = g_mouse_x;
+		ent->position.y = g_mouse_y;
+	}
 	double beat_time = get_beat_time();
 	List *spawns = map_get_spawns(beat_time);
 	gfc_list_foreach(spawns, spawn_enemy);
@@ -89,12 +95,13 @@ void dance_floor_think(Entity *ent) {
 
 	double interval = get_beat_interval(g_nearby_beats, beat_time);
 	PhysicsWorld *physics = rollback_cur_physics(&g_rollback);
+	double speed = get_music_speed();
 	if(interval == INFINITY) {
-		physics->gravity = g_jump_velocity/g_beat_interval;
+		physics->gravity = speed*speed*g_jump_velocity/g_beat_interval;
 	} else {
-		physics->gravity = 2.0*g_jump_velocity/interval;
+		physics->gravity = speed*speed*2.0*g_jump_velocity/interval;
 	}
-	physics->jump_velocity = g_jump_velocity;
+	physics->jump_velocity = speed*g_jump_velocity;
 
 	if((g_keys[SDL_SCANCODE_P] && !g_prev_keys[SDL_SCANCODE_P]) ||
 			(g_keys[SDL_SCANCODE_ESCAPE] && !g_prev_keys[SDL_SCANCODE_ESCAPE])) {
@@ -121,10 +128,12 @@ Entity *create_dance_floor_entity() {
 	Entity *ent = allocate_entity();
 	ent->think = dance_floor_think;
 	ent->cleanup = dance_floor_cleanup;
+	g_dance_floor = ent;
 	return ent;
 }
 
 extern int g_level_points;
+extern Bool g_mods_enabled[NUM_MODS];
 long int g_prev_points = -1;
 
 void dance_floor(char *map_filename) {
@@ -147,4 +156,12 @@ void dance_floor(char *map_filename) {
 
 	map_load(map_filename);
 	play_music();
+
+	if(g_mods_enabled[FASTER]) {
+		set_music_speed(FASTER_SPEED);
+	} else if(g_mods_enabled[SLOWER]) {
+		set_music_speed(SLOWER_SPEED);
+	} else {
+		set_music_speed(1.0);
+	}
 }

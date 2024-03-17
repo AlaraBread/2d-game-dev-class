@@ -22,15 +22,15 @@ void create_pause_menu() {
 	tint->group = UI_GROUP_PAUSE_MENU;
 
 	Entity *paused_label = create_label(vector2d(1200/2, 100), CENTER, CENTER);
-	strcpy(paused_label->text, "Paused");
+	strcpy(paused_label->text, "paused");
 	paused_label->font_size = 8;
 	paused_label->group = UI_GROUP_PAUSE_MENU;
 
-	Entity *unpause_button = create_button(vector2d(1200/2, 420), vector2d(500, 100), "Unpause");
+	Entity *unpause_button = create_button(vector2d(1200/2, 420), vector2d(500, 100), "unpause");
 	unpause_button->click = unpause_clicked;
 	unpause_button->group = UI_GROUP_PAUSE_MENU;
 
-	Entity *main_menu_button = create_button(vector2d(1200/2, 300), vector2d(500, 100), "Main Menu");
+	Entity *main_menu_button = create_button(vector2d(1200/2, 300), vector2d(500, 100), "main menu");
 	main_menu_button->click = main_menu_clicked;
 	main_menu_button->group = UI_GROUP_PAUSE_MENU;
 }
