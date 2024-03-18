@@ -13,6 +13,7 @@ PhysicsBody *init_wall(PhysicsWorld *world, Vector2D position, Vector2D normal, 
 	wall->physics_material.friction = friction;
 	wall->physics_material.bounce = bounce;
 	wall->layer = ~0;
+	return wall;
 }
 
 PhysicsBody *init_floor(PhysicsWorld *world, Vector2D position, Vector2D normal, float friction, float bounce) {

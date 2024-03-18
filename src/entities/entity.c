@@ -187,7 +187,7 @@ Entity *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_a
 	return label;
 }
 
-Entity *create_button(Vector2D position, Vector2D size, char *text) {
+Entity *create_button(Vector2D position, Vector2D size, const char *text) {
 	Entity *button = allocate_entity();
 	button->bg_color = gfc_color(0.1, 0.1, 0.1, 1.0);
 	button->border_color = gfc_color(1.0, 1.0, 1.0, 1.0);

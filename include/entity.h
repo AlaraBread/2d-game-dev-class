@@ -8,6 +8,7 @@
 #define MAX_ENTITY_SPRITES 3
 
 #define UI_GROUP_PAUSE_MENU 1
+#define UI_GROUP_END_MENU 2
 
 typedef struct Entity_S {
 	Bool inuse;
@@ -50,7 +51,7 @@ void button_mouse_enter(Entity *button);
 void button_mouse_exit(Entity *button);
 void button_mouse_down(Entity *button);
 void button_mouse_up(Entity *button);
-Entity *create_button(Vector2D position, Vector2D size, char *text);
+Entity *create_button(Vector2D position, Vector2D size, const char *text);
 Entity *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y);
 void entity_frame();
 

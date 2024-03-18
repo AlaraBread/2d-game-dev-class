@@ -42,14 +42,19 @@ double get_beat_time() {
 	return get_music_speed() * g_filtered_music_time_seconds / g_beat_interval;
 }
 
+Bool g_fading_out = false;
+double g_fade = 1.0;
+double g_music_volume = 1.0;
 void music_volume(float volume) {
+	g_music_volume = volume;
 	if(!Soloud_isValidVoiceHandle(g_soloud, g_music_voice_handle)) {
 		return;
 	}
-	Soloud_setVolume(g_soloud, g_music_voice_handle, volume);
+	Soloud_setVolume(g_soloud, g_music_voice_handle, volume*SDL_clamp(g_fade, 0.0, 1.0));
 }
 
 void play_music() {
+	stop_music();
 	if(!g_song_filename) {
 		return;
 	}
@@ -68,6 +73,9 @@ void play_music() {
 	g_music_voice_handle = Soloud_play(g_soloud, g_music);
 
 	g_filtered_music_time_seconds = 0.0;
+
+	g_fade = 1.0;
+	g_fading_out = false;
 
 	music_volume(1.0);
 }
@@ -92,17 +100,29 @@ void resume_music() {
 double g_music_speed;
 void set_music_speed(double speed) {
 	g_music_speed = speed;
-	Soloud_setRelativePlaySpeed(g_soloud, g_music_voice_handle, speed);
+	Soloud_setRelativePlaySpeed(g_soloud, g_music_voice_handle, speed * SDL_clamp(g_fade, 0.1, 1.0));
 }
 
 double get_music_speed() {
-	return g_music_speed;
+	return g_music_speed * SDL_clamp(g_fade, 0.1, 1.0);
 }
 
-void audio_tick() {
+void music_fade_out() {
+	g_fading_out = true;
+}
+
+#define FADE_TIME 5.0
+void audio_tick(float delta) {
 	if(!Soloud_isValidVoiceHandle(g_soloud, g_music_voice_handle)) {
 		return;
 	}
 	g_filtered_music_time_seconds = (g_filtered_music_time_seconds*9
 			+Soloud_getStreamTime(g_soloud, g_music_voice_handle))/10;
+	if(g_fading_out) {
+		g_fade = SDL_clamp(g_fade - delta/FADE_TIME, 0.0, 1.0);
+	} else {
+		g_fade = SDL_clamp(g_fade + delta/FADE_TIME, 0.0, 1.0);
+	}
+	music_volume(g_music_volume);
+	set_music_speed(g_music_speed);
 }

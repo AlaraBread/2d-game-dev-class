@@ -5,6 +5,8 @@
 #include "tmp_text.h"
 #include "gfc_list.h"
 #include "shop.h"
+#include "end_screen.h"
+#include "dance_floor.h"
 
 // https://stackoverflow.com/questions/4633177/how-to-wrap-a-float-to-the-interval-pi-pi
 // answer by Tim Čas
@@ -23,7 +25,7 @@ double wrapMinMax(double x, double min, double max)
 void apply_righting(PhysicsBody *body, float delta) {
 	float r = wrapMinMax(body->rotation, -M_PI, M_PI);
 	if(body->tags & TAG_PLAYER) {
-		body->angular_velocity -= delta*SDL_clamp(10.0*r, -10.0, 10.0);
+		body->angular_velocity -= delta*SDL_clamp(1.0*r, -10.0, 10.0);
 	} else {
 		body->angular_velocity -= delta*SDL_clamp(5.0*r, -30.0, 30.0);
 	}
@@ -131,6 +133,7 @@ extern List *g_nearby_secondary_beats;
 extern double g_beat_interval;
 extern int g_points;
 extern int g_level_points;
+extern int g_game_state;
 
 Bool mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	apply_righting(body, delta);
@@ -142,6 +145,8 @@ Bool mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		if(body->timer <= 0) {
 			if(body->tags & TAG_PLAYER) {
 				world->player_idx = -1;
+				g_game_state = LOST;
+				create_end_screen();
 			}
 			body->inuse = 0;
 		}
@@ -156,6 +161,10 @@ Bool mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		body->center_of_mass = vector2d(0.0, 0.0);
 		body->layer = 0;
 		body->mask = 2;
+		if(body->tags & TAG_PLAYER) {
+			g_game_state = DYING;
+			music_fade_out();
+		}
 		return true;
 	}
 	return false;

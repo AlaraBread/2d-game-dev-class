@@ -12,10 +12,10 @@ static void back_button_clicked(Entity *back_button) {
 	main_menu();
 }
 
+char g_map_filename[512];
 void map_button_clicked(Entity *map_button) {
-	char filename[512];
-	strcpy(filename, map_button->filename);
-	dance_floor(filename);
+	strcpy(g_map_filename, map_button->filename);
+	dance_floor(g_map_filename);
 }
 
 void draw_map_button(Entity *map_button) {
@@ -65,7 +65,7 @@ void level_select() {
 	struct dirent *ep;
 	dp = opendir("./sound/maps");
 	if(dp != NULL) {
-		while (ep = readdir (dp)) {
+		while ((ep = readdir (dp))) {
 			if(strcmp("..", ep->d_name) == 0 || strcmp(".", ep->d_name) == 0) {
 				continue;
 			}

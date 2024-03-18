@@ -2,6 +2,7 @@
 #include "entity.h"
 #include "main_menu.h"
 #include "shop.h"
+#include "points.h"
 
 extern Rollback g_rollback;
 extern int g_points;

@@ -22,4 +22,5 @@ Entity *init_tmp_text(char *text, int length, Vector2D position, Color color) {
 	ent->update = tmp_text_update;
 	ent->total_timer = 30;
 	ent->timer = ent->total_timer;
+	return ent;
 }

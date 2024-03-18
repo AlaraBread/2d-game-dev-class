@@ -320,9 +320,9 @@ List *map_get_nearby_secondary_beats(double time, double distance) {
 		return NULL;
 	}
 	List *nearby = gfc_list_new();
-	for(int i = 0; i < g_secondary_beats_len; i++) {
+	for(long int i = 0; i < g_secondary_beats_len; i++) {
 		if(fabs(g_secondary_beats[i] - time) <= distance) {
-			gfc_list_append(nearby, i);
+			gfc_list_append(nearby, (void *)i);
 		}
 	}
 	return nearby;
@@ -333,9 +333,9 @@ List *map_get_nearby_beats(double time, double distance) {
 		return NULL;
 	}
 	List *nearby = gfc_list_new();
-	for(int i = 0; i < g_beats_len; i++) {
+	for(long int i = 0; i < g_beats_len; i++) {
 		if(fabs(g_beats[i] - time) <= distance) {
-			gfc_list_append(nearby, i);
+			gfc_list_append(nearby, (void *)i);
 		}
 	}
 	return nearby;

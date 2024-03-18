@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 }
 
 void run_physics_frame() {
-	audio_tick();
+	audio_tick(0.016);
 
 	PhysicsWorld *physics_world = rollback_cur_physics(&g_rollback);
 

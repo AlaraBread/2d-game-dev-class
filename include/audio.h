@@ -9,8 +9,9 @@ void play_music();
 void pause_music();
 void resume_music();
 void stop_music();
-void audio_tick();
+void audio_tick(float delta);
 void set_music_speed(double speed);
 double get_music_speed();
+void music_fade_out();
 
 #endif

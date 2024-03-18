@@ -14,6 +14,7 @@
 #include "points.h"
 #include "pause.h"
 #include "mods.h"
+#include "dance_floor.h"
 
 extern Rollback g_rollback;
 
@@ -42,10 +43,10 @@ extern int *g_used_secondary_beats;
 
 double beat_warning = 3.0;
 void draw_beat(void *data) {
-	if(g_used_beats[(int)data] != 0) {
+	if(g_used_beats[(long int)data] != 0) {
 		return;
 	}
-	double beat_time = g_beats[(int)data];
+	double beat_time = g_beats[(long int)data];
 	Vector2D center = g_dance_floor->position;
 	double delta = beat_time - get_beat_time();
 	center.x -= delta * 100.0;
@@ -55,10 +56,10 @@ void draw_beat(void *data) {
 
 double secondary_beat_warning = 3.0;
 void draw_secondary_beat(void *data) {
-	if(g_used_secondary_beats[(int)data] != 0) {
+	if(g_used_secondary_beats[(long int)data] != 0) {
 		return;
 	}
-	double beat_time = g_secondary_beats[(int)data];
+	double beat_time = g_secondary_beats[(long int)data];
 	Vector2D center = g_dance_floor->position;
 	double delta = beat_time - get_beat_time();
 	center.y -= delta * 100.0;
@@ -72,7 +73,7 @@ double get_beat_interval(double *beats, List *nearby_beats, double beat_time) {
 	unsigned int len = gfc_list_get_count(nearby_beats);
 	double prev_b = INFINITY;
 	for(int i = 0; i < len; i++) {
-		double b = beats[(int)gfc_list_get_nth(nearby_beats, i)];
+		double b = beats[(long int)gfc_list_get_nth(nearby_beats, i)];
 		if(!(b > beat_time && prev_b < beat_time)) {
 			prev_b = b;
 			continue;
@@ -85,11 +86,12 @@ double get_beat_interval(double *beats, List *nearby_beats, double beat_time) {
 extern const Uint8 *g_keys;
 extern Uint8 g_prev_keys[SDL_NUM_SCANCODES];
 extern Bool g_paused;
+extern int g_game_state;
 
 List *g_nearby_beats;
 List *g_nearby_secondary_beats;
 void dance_floor_think(Entity *ent) {
-	if(!g_paused) {
+	if(!g_paused && g_game_state == PLAYING) {
 		ent->position.x = g_mouse_x;
 		ent->position.y = g_mouse_y;
 	}
@@ -98,10 +100,11 @@ void dance_floor_think(Entity *ent) {
 	gfc_list_foreach(spawns, spawn_enemy);
 
 	g_nearby_beats = map_get_nearby_beats(beat_time, beat_warning);
-	gfc_list_foreach(g_nearby_beats, draw_beat);
-
 	g_nearby_secondary_beats = map_get_nearby_secondary_beats(beat_time, secondary_beat_warning);
-	gfc_list_foreach(g_nearby_secondary_beats, draw_secondary_beat);
+	if(g_game_state == PLAYING) {
+		gfc_list_foreach(g_nearby_beats, draw_beat);
+		gfc_list_foreach(g_nearby_secondary_beats, draw_secondary_beat);
+	}
 
 	double interval = get_beat_interval(g_beats, g_nearby_beats, beat_time);
 	PhysicsWorld *physics = rollback_cur_physics(&g_rollback);
@@ -145,11 +148,15 @@ Entity *create_dance_floor_entity() {
 extern int g_level_points;
 extern Bool g_mods_enabled[NUM_MODS];
 long int g_prev_points = -1;
+int g_game_state = PLAYING;
 
 void dance_floor(char *map_filename) {
 	PhysicsWorld *world = rollback_cur_physics(&g_rollback);
 	physics_clear_bodies(world);
 	clear_entities();
+
+	g_game_state = PLAYING;
+
 	Entity *dance_floor_entity = create_dance_floor_entity();
 	strcpy(dance_floor_entity->filename, map_filename);
 	g_level_points = 0;
