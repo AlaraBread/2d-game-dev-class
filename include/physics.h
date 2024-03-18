@@ -5,7 +5,7 @@
 #ifndef __ALARA_PHYSICS__
 #define __ALARA_PHYSICS__
 
-#define MAX_REPORTED_COLLISIONS 2
+#define MAX_REPORTED_COLLISIONS 1
 
 typedef struct CapsuleShape {
 	float radius;
@@ -75,7 +75,8 @@ typedef struct PhysicsBody_S {
 	PhysicsMaterial physics_material;
 	float gravity_scale;
 	Collision collisions[MAX_REPORTED_COLLISIONS];
-	double timer;
+	float timer;
+	float cooldown;
 	long int tags;
 	long int layer;
 	long int mask;

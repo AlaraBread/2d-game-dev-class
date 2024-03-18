@@ -2,6 +2,7 @@
 #include "physics.h"
 #include "mosher.h"
 #include "wall.h"
+#include "shop.h"
 
 float vector2d_cross(Vector2D a, Vector2D b) {
 	return a.x * b.y - a.y * b.x;
@@ -593,6 +594,8 @@ void physics_draw_sprites(PhysicsWorld *world) {
 	}
 }
 
+extern int g_selected_powerup;
+
 void physics_debug_draw(PhysicsWorld *world) {
 	for(int i = 0; i < world->max_physics_bodies; i++) {
 		PhysicsBody *body = &world->physics_bodies[i];
@@ -630,6 +633,9 @@ void physics_debug_draw(PhysicsWorld *world) {
 			case CAPSULE:
 			{
 				Color color = gfc_color(1.0, 1.0, 1.0, 1.0);
+				if(body->tags & TAG_PLAYER) {
+					color = gfc_color(0.72, 0.76, 0.98, 1.0);
+				}
 				if(body->tags & TAG_DEAD) {
 					color.a = body->timer;
 				}
@@ -655,6 +661,10 @@ void physics_debug_draw(PhysicsWorld *world) {
 				Vector2D com;
 				vector2d_add(com, body->position, vector2d_rotate(body->center_of_mass, body->rotation));
 				gf2d_draw_circle(com, 20, gfc_color(1.0, 1.0, 0.0, color.a));
+
+				if((body->tags & TAG_PLAYER) && (g_selected_powerup == FART || g_selected_powerup == VACCUM) && body->cooldown <= 0.0) {
+					gf2d_draw_circle(body->position, 20, gfc_color(0.47, 0.85, 0.22, 1.0));
+				}
 				break;
 			}
 			default:

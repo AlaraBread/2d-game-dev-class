@@ -61,6 +61,8 @@ moshing_simulator
 #logs
 *.log
 
+*.reapeaks
+
 makefile.dep
 
 save.json

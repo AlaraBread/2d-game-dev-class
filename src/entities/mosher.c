@@ -25,7 +25,7 @@ double wrapMinMax(double x, double min, double max)
 void apply_righting(PhysicsBody *body, float delta) {
 	float r = wrapMinMax(body->rotation, -M_PI, M_PI);
 	if(body->tags & TAG_PLAYER) {
-		body->angular_velocity -= delta*SDL_clamp(10.0*r, -10.0, 10.0);
+		body->angular_velocity -= delta*SDL_clamp(3.0*r, -10.0, 10.0);
 	} else {
 		body->angular_velocity -= delta*SDL_clamp(5.0*r, -30.0, 30.0);
 	}
@@ -43,7 +43,7 @@ PhysicsBody *init_enemy_mosher(PhysicsWorld *world) {
 	enemy->physics_type = RIGID;
 	enemy->position = vector2d(gfc_crandom()*200.0+300.0, gfc_crandom()*200.0+300.0);
 	enemy->shape_type = CAPSULE;
-	enemy->shape.circle.radius = 20.0;
+	enemy->shape.circle.radius = 30.0;
 	enemy->shape.capsule.height = 150.0;
 	enemy->center_of_mass = vector2d(0.0, 75.0);
 	enemy->mass = 10.0;
@@ -62,7 +62,7 @@ PhysicsBody *init_enemy_mosher(PhysicsWorld *world) {
 PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 	PhysicsBody *player = allocate_physics_body(world);
 	player->shape_type = CAPSULE;
-	player->shape.circle.radius = 20.0;
+	player->shape.circle.radius = 30.0;
 	player->shape.capsule.height = 200.0;
 	player->physics_type = RIGID;
 	player->mass = 20.0;
@@ -179,8 +179,11 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	if(mosher_update(body, world, delta)) {
 		return;
 	}
-	// magnet powerup
-	if(g_selected_powerup == MAGNET && (world->mouse_buttons&SDL_BUTTON(3)) && !(world->prev_mouse_buttons&SDL_BUTTON(3))) {
+	// fart/vaccum powerup
+	if((g_selected_powerup == FART || g_selected_powerup == VACCUM) &&
+			body->cooldown <= 0.0 &&
+			(world->mouse_buttons&SDL_BUTTON(3)) && !(world->prev_mouse_buttons&SDL_BUTTON(3))) {
+		body->cooldown = 5.0;
 		for(int i = 0; i < world->max_physics_bodies; i++) {
 			PhysicsBody *e = &world->physics_bodies[i];
 			if(!e->inuse || !(e->tags & TAG_ENEMY)) {
@@ -188,10 +191,15 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 			}
 			Vector2D impulse;
 			vector2d_sub(impulse, body->position, e->position);
-			vector2d_scale(impulse, impulse, 50.0);
+			if(g_selected_powerup == VACCUM) {
+				vector2d_scale(impulse, impulse, 50.0);
+			} else {
+				vector2d_scale(impulse, impulse, -50.0);
+			}
 			apply_central_impulse(e, impulse);
 		}
 	}
+	body->cooldown = SDL_max(body->cooldown-delta, 0.0);
 
 	Vector2D impulse;
 	double beat_time = get_beat_time();
@@ -203,7 +211,7 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 
 	long int secondary_idx = -1;
 	long int primary_idx = -1;
-	double secondary_beat_dist = get_distance_to_beat(g_secondary_beats, g_nearby_secondary_beats, g_used_secondary_beats, beat_time, &secondary_idx);
+	double secondary_beat_dist = fabs(get_distance_to_beat(g_secondary_beats, g_nearby_secondary_beats, g_used_secondary_beats, beat_time, &secondary_idx));
 	double dist = fabs(get_distance_to_beat(g_beats, g_nearby_beats, g_used_beats, beat_time, &primary_idx));
 	Bool secondary = false;
 	if(secondary_beat_dist < dist) {
@@ -232,10 +240,12 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		use_code = 3;
 	}
 
-	if(secondary && secondary_idx != -1) {
-		g_used_secondary_beats[secondary_idx] = use_code;
-	} else if (primary_idx != -1) {
-		g_used_beats[primary_idx] = use_code;
+	if(dist < 0.25) {
+		if(secondary && secondary_idx != -1) {
+			g_used_secondary_beats[secondary_idx] = use_code;
+		} else if (primary_idx != -1) {
+			g_used_beats[primary_idx] = use_code;
+		}
 	}
 
 	if(secondary) {

@@ -8,7 +8,7 @@ extern Rollback g_rollback;
 extern int g_points;
 extern int g_level_points;
 
-char g_powerup_names[NUM_POWERUPS][64] = {"grappling hook", "bouncy", "strong legs", "magnet", "tall"};
+char g_powerup_names[NUM_POWERUPS][64] = {"fart", "vaccum", "bouncy", "strong legs", "tall"};
 int g_powerup_costs[NUM_POWERUPS] = {100, 200, 300, 400, 500};
 Bool g_powerup_ownership[NUM_POWERUPS] = {false};
 int g_selected_powerup = -1;

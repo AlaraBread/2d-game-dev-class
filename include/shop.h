@@ -2,7 +2,7 @@
 #define __ALARA_SHOP__
 
 #define NUM_POWERUPS 5
-enum {GRAPPLING_HOOK, BOUNCY, STRONG_LEGS, MAGNET, TALL};
+enum {FART, VACCUM, BOUNCY, STRONG_LEGS, TALL};
 
 void shop();
 
