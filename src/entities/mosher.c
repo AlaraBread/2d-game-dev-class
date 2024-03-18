@@ -25,7 +25,7 @@ double wrapMinMax(double x, double min, double max)
 void apply_righting(PhysicsBody *body, float delta) {
 	float r = wrapMinMax(body->rotation, -M_PI, M_PI);
 	if(body->tags & TAG_PLAYER) {
-		body->angular_velocity -= delta*SDL_clamp(1.0*r, -10.0, 10.0);
+		body->angular_velocity -= delta*SDL_clamp(10.0*r, -10.0, 10.0);
 	} else {
 		body->angular_velocity -= delta*SDL_clamp(5.0*r, -30.0, 30.0);
 	}
@@ -43,7 +43,7 @@ PhysicsBody *init_enemy_mosher(PhysicsWorld *world) {
 	enemy->physics_type = RIGID;
 	enemy->position = vector2d(gfc_crandom()*200.0+300.0, gfc_crandom()*200.0+300.0);
 	enemy->shape_type = CAPSULE;
-	enemy->shape.circle.radius = 40.0;
+	enemy->shape.circle.radius = 20.0;
 	enemy->shape.capsule.height = 150.0;
 	enemy->center_of_mass = vector2d(0.0, 75.0);
 	enemy->mass = 10.0;
@@ -62,7 +62,7 @@ PhysicsBody *init_enemy_mosher(PhysicsWorld *world) {
 PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 	PhysicsBody *player = allocate_physics_body(world);
 	player->shape_type = CAPSULE;
-	player->shape.circle.radius = 50.0;
+	player->shape.circle.radius = 20.0;
 	player->shape.capsule.height = 200.0;
 	player->physics_type = RIGID;
 	player->mass = 20.0;
@@ -201,8 +201,6 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		return;
 	}
 
-	//printf("%lf\n", beat_time);
-
 	long int secondary_idx = -1;
 	long int primary_idx = -1;
 	double secondary_beat_dist = get_distance_to_beat(g_secondary_beats, g_nearby_secondary_beats, g_used_secondary_beats, beat_time, &secondary_idx);
@@ -274,7 +272,6 @@ void enemy_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	double beat_time = get_beat_time();
 
 	double beat_pos = get_beat_position(g_beats, g_nearby_beats, beat_time);
-	//printf("%lf\n", beat_pos);
 	if(beat_pos >= body->timer) {
 		body->physics_material.bounce = 0.3;
 		body->timer = beat_pos;

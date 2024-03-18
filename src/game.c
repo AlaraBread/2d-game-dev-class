@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 	load();
 
 	// physics setup
-	g_rollback = init_rollback(200, 20);
+	g_rollback = init_rollback(200, 15);
 
 	main_menu();
 
