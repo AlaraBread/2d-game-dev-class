@@ -18,6 +18,9 @@ int g_high_score = 0;
 EnemySpawn *g_enemy_spawns;
 unsigned int g_enemy_spawns_len;
 
+int *g_used_beats = NULL;
+int *g_used_secondary_beats = NULL;
+
 extern double g_bpm;
 
 int double_cmp (const void *a, const void *b) {
@@ -48,6 +51,7 @@ void map_load(const char *filename) {
 		unsigned int len = sj_list_get_count(secondary_beats);
 		g_secondary_beats = calloc(len, sizeof(double));
 		g_secondary_beats_len = len;
+		g_used_secondary_beats = calloc(sizeof(int), len);
 		if(!g_secondary_beats) {
 			slog("Ran out of memory :(");
 			map_free();
@@ -81,6 +85,7 @@ void map_load(const char *filename) {
 		unsigned int len = sj_list_get_count(beats);
 		g_beats = calloc(len, sizeof(double));
 		g_beats_len = len;
+		g_used_beats = calloc(sizeof(int), len);
 		if(!g_beats) {
 			slog("Ran out of memory :(");
 			map_free();
@@ -294,6 +299,14 @@ void map_free() {
 		free(g_secondary_beats);
 		g_secondary_beats = NULL;
 	}
+	if(g_used_beats != NULL) {
+		free(g_used_beats);
+		g_used_beats = NULL;
+	}
+	if(g_used_secondary_beats != NULL) {
+		free(g_used_secondary_beats);
+		g_used_secondary_beats = NULL;
+	}
 	if(g_enemy_spawns != NULL) {
 		free(g_enemy_spawns);
 		g_enemy_spawns = NULL;
@@ -309,7 +322,7 @@ List *map_get_nearby_secondary_beats(double time, double distance) {
 	List *nearby = gfc_list_new();
 	for(int i = 0; i < g_secondary_beats_len; i++) {
 		if(fabs(g_secondary_beats[i] - time) <= distance) {
-			gfc_list_append(nearby, &g_secondary_beats[i]);
+			gfc_list_append(nearby, i);
 		}
 	}
 	return nearby;
@@ -322,7 +335,7 @@ List *map_get_nearby_beats(double time, double distance) {
 	List *nearby = gfc_list_new();
 	for(int i = 0; i < g_beats_len; i++) {
 		if(fabs(g_beats[i] - time) <= distance) {
-			gfc_list_append(nearby, &g_beats[i]);
+			gfc_list_append(nearby, i);
 		}
 	}
 	return nearby;

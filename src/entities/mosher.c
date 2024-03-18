@@ -86,23 +86,28 @@ PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 	return player;
 }
 
-double get_distance_to_beat(List *beats, double beat_time) {
+double get_distance_to_beat(double *beats, List *nearby_beats, int *used_beats, double beat_time, long int *index) {
 	double min_dist = INFINITY;
-	unsigned int len = gfc_list_get_count(beats);
+	unsigned int len = gfc_list_get_count(nearby_beats);
 	for(int i = 0; i < len; i++) {
-		double b = *((double *)gfc_list_get_nth(beats, i));
+		long int j = (long int)gfc_list_get_nth(nearby_beats, i);
+		if(used_beats[j]) {
+			continue;
+		}
+		double b = beats[j];
 		double dist = b - beat_time;
 		if(fabs(dist) < fabs(min_dist)) {
 			min_dist = dist;
+			*index = j;
 		}
 	}
 	return min_dist;
 }
 
-double get_beat_position(List *beats, double beat_time) {
-	int len = gfc_list_get_count(beats);
+double get_beat_position(double *beats, List *nearby_beats, double beat_time) {
+	int len = gfc_list_get_count(nearby_beats);
 	for(int i = len-1; i >= 0; i--) {
-		double b = *((double *)gfc_list_get_nth(beats, i));
+		double b = beats[(long int)gfc_list_get_nth(nearby_beats, i)];
 		if(beat_time > b) {
 			return beat_time-b;
 		}
@@ -156,6 +161,11 @@ Bool mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	return false;
 }
 
+extern double *g_beats;
+extern double *g_secondary_beats;
+extern int *g_used_beats;
+extern int *g_used_secondary_beats;
+
 void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	if(mosher_update(body, world, delta)) {
 		return;
@@ -182,10 +192,12 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		return;
 	}
 
-	printf("%lf\n", beat_time);
+	//printf("%lf\n", beat_time);
 
-	double secondary_beat_dist = get_distance_to_beat(g_nearby_secondary_beats, beat_time);
-	double dist = fabs(get_distance_to_beat(g_nearby_beats, beat_time));
+	long int secondary_idx = -1;
+	long int primary_idx = -1;
+	double secondary_beat_dist = get_distance_to_beat(g_secondary_beats, g_nearby_secondary_beats, g_used_secondary_beats, beat_time, &secondary_idx);
+	double dist = fabs(get_distance_to_beat(g_beats, g_nearby_beats, g_used_beats, beat_time, &primary_idx));
 	Bool secondary = false;
 	if(secondary_beat_dist < dist) {
 		dist = fabs(secondary_beat_dist);
@@ -196,18 +208,29 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	int c;
 	Color color;
 	int p = 0;
+	int use_code = 0;
 	if(dist < 0.05) {
 		c = sprintf(t, "perfect");
 		color = gfc_color(0.47, 0.85, 0.22, 1.0);
 		p = 3;
+		use_code = 1;
 	} else if (dist < 0.1) {
 		c = sprintf(t, "close");
 		color = gfc_color(0.94, 0.69, 0.25, 1.0);
 		p = 1;
+		use_code = 2;
 	} else {
 		c = sprintf(t, "miss");
 		color = gfc_color(0.96, 0.29, 0.21, 1.0);
+		use_code = 3;
 	}
+
+	if(secondary && secondary_idx != -1) {
+		g_used_secondary_beats[secondary_idx] = use_code;
+	} else if (primary_idx != -1) {
+		g_used_beats[primary_idx] = use_code;
+	}
+
 	if(secondary) {
 		color = gfc_color(0.70, 0.36, 0.98, 1.0);
 	}
@@ -241,7 +264,8 @@ void enemy_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	Vector2D impulse;
 	double beat_time = get_beat_time();
 
-	double beat_pos = get_beat_position(g_nearby_beats, beat_time);
+	double beat_pos = get_beat_position(g_beats, g_nearby_beats, beat_time);
+	//printf("%lf\n", beat_pos);
 	if(beat_pos >= body->timer) {
 		body->physics_material.bounce = 0.3;
 		body->timer = beat_pos;

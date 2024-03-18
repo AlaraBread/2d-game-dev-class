@@ -35,10 +35,17 @@ void spawn_enemy(void *data) {
 extern int g_mouse_x;
 extern int g_mouse_y;
 Entity *g_dance_floor;
+extern double *g_beats;
+extern double *g_secondary_beats;
+extern int *g_used_beats;
+extern int *g_used_secondary_beats;
 
 double beat_warning = 3.0;
 void draw_beat(void *data) {
-	double beat_time = *((double *)data);
+	if(g_used_beats[(int)data] != 0) {
+		return;
+	}
+	double beat_time = g_beats[(int)data];
 	Vector2D center = g_dance_floor->position;
 	double delta = beat_time - get_beat_time();
 	center.x -= delta * 100.0;
@@ -46,9 +53,12 @@ void draw_beat(void *data) {
 	gf2d_draw_circle(center, 10, color);
 }
 
-double secondary_beat_warning = 2.0;
+double secondary_beat_warning = 3.0;
 void draw_secondary_beat(void *data) {
-	double beat_time = *((double *)data);
+	if(g_used_secondary_beats[(int)data] != 0) {
+		return;
+	}
+	double beat_time = g_secondary_beats[(int)data];
 	Vector2D center = g_dance_floor->position;
 	double delta = beat_time - get_beat_time();
 	center.y -= delta * 100.0;
@@ -58,11 +68,11 @@ void draw_secondary_beat(void *data) {
 
 extern double g_beat_interval;
 extern double g_jump_velocity;
-double get_beat_interval(List *beats, double beat_time) {
-	unsigned int len = gfc_list_get_count(beats);
+double get_beat_interval(double *beats, List *nearby_beats, double beat_time) {
+	unsigned int len = gfc_list_get_count(nearby_beats);
 	double prev_b = INFINITY;
 	for(int i = 0; i < len; i++) {
-		double b = *((double *)gfc_list_get_nth(beats, i));
+		double b = beats[(int)gfc_list_get_nth(nearby_beats, i)];
 		if(!(b > beat_time && prev_b < beat_time)) {
 			prev_b = b;
 			continue;
@@ -93,7 +103,7 @@ void dance_floor_think(Entity *ent) {
 	g_nearby_secondary_beats = map_get_nearby_secondary_beats(beat_time, secondary_beat_warning);
 	gfc_list_foreach(g_nearby_secondary_beats, draw_secondary_beat);
 
-	double interval = get_beat_interval(g_nearby_beats, beat_time);
+	double interval = get_beat_interval(g_beats, g_nearby_beats, beat_time);
 	PhysicsWorld *physics = rollback_cur_physics(&g_rollback);
 	double speed = get_music_speed();
 	if(interval == INFINITY) {
