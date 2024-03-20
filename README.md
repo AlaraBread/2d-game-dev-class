@@ -2,8 +2,8 @@
 moshing simulator is a game that i made for dj's 2d game programming class. it is a rhythm game where the goal is to reach the end of the song while knocking as many people over as possible.
 
 ## controls
-left click - jump
-right click - use ability (if you have an active ability equipped)
+- left click - jump
+- right click - use ability (if you have an active ability equipped)
 
 ## how to play
 jump on the beat (there is an indicator that moves over your cursor in case you are unsure where the beat is). jump on secondary beats for extra points (secondary beats are the purple ones). your character will jump towards your mouse.
