@@ -7,6 +7,8 @@
 #include "shop.h"
 #include "end_screen.h"
 #include "dance_floor.h"
+#include "map.h"
+#include "mods.h"
 
 // https://stackoverflow.com/questions/4633177/how-to-wrap-a-float-to-the-interval-pi-pi
 // answer by Tim Čas
@@ -25,41 +27,71 @@ double wrapMinMax(double x, double min, double max)
 void apply_righting(PhysicsBody *body, float delta) {
 	float r = wrapMinMax(body->rotation, -M_PI, M_PI);
 	if(body->tags & TAG_PLAYER) {
-		body->angular_velocity -= delta*SDL_clamp(3.0*r, -10.0, 10.0);
+		body->angular_velocity -= delta*SDL_clamp(5.0*r, -20.0, 20.0);
 	} else {
 		body->angular_velocity -= delta*SDL_clamp(5.0*r, -30.0, 30.0);
 	}
 }
 
 extern int g_selected_powerup;
+float get_mosher_bounce(PhysicsBody *body) {
+	if(body->tags & TAG_PLAYER) {
+		if(g_selected_powerup == BOUNCY) {
+			return 1.0;
+		}
+		return 0.3;
+	} else {
+		return 0.3;
+	}
+}
+
 void enemy_update(PhysicsBody *body, PhysicsWorld *world, float delta);
 void player_update(PhysicsBody *body, PhysicsWorld *world, float delta);
 
-PhysicsBody *init_enemy_mosher(PhysicsWorld *world) {
+PhysicsBody *init_enemy_mosher(PhysicsWorld *world, EnemySpawn spawn) {
 	PhysicsBody *enemy = allocate_physics_body(world);
 	if(enemy == NULL) {
 		return enemy;
 	}
 	enemy->physics_type = RIGID;
+	enemy->physics_material.friction = 1.0;
 	enemy->position = vector2d(gfc_crandom()*200.0+300.0, gfc_crandom()*200.0+300.0);
 	enemy->shape_type = CAPSULE;
-	enemy->shape.circle.radius = 30.0;
+	enemy->shape.circle.radius = 15.0;
 	enemy->shape.capsule.height = 150.0;
-	enemy->center_of_mass = vector2d(0.0, 75.0);
 	enemy->mass = 10.0;
+	enemy->type = spawn.enemy_type;
+	float com_ratio = 1.0;
+	switch(spawn.enemy_type) {
+		case SHORT:
+			enemy->shape.capsule.height *= 0.5;
+			enemy->shape.capsule.radius *= 1.25;
+			break;
+		case AGGRESSIVE:
+			enemy->shape.capsule.height *= 0.8;
+			break;
+		case LAZY:
+			enemy->shape.capsule.height *= 1.3;
+			enemy->mass *= 0.25;
+			com_ratio = 0.75;
+			break;
+		default:
+	}
 	float l = enemy->shape.capsule.height+enemy->shape.capsule.radius*2.0;
 	enemy->moment_of_inertia = enemy->mass*l*l/3.0;
-	enemy->physics_material.bounce = 0.1;
-	enemy->physics_material.friction = 1.0;
+	enemy->center_of_mass = vector2d(0.0, com_ratio*enemy->shape.capsule.height/2);
 	enemy->update = enemy_update;
 	enemy->mask = 1;
 	enemy->layer = 1;
 	enemy->tags = TAG_ENEMY;
+	enemy->physics_material.bounce = get_mosher_bounce(enemy);
 	return enemy;
 }
 
+long int g_missed_beats = 0;
 #define STRONG_LEGS_FACTOR 1.7
 PhysicsBody *init_player_mosher(PhysicsWorld *world) {
+	g_missed_beats = 0;
 	PhysicsBody *player = allocate_physics_body(world);
 	player->shape_type = CAPSULE;
 	player->shape.circle.radius = 30.0;
@@ -106,6 +138,19 @@ double get_distance_to_beat(double *beats, List *nearby_beats, int *used_beats, 
 	return min_dist;
 }
 
+double get_first_beat(double *beats, List *nearby_beats, int *used_beats, int *index) {
+	int len = gfc_list_get_count(nearby_beats);
+	for(int i = 0; i < len; i++) {
+		long int j = (long int)gfc_list_get_nth(nearby_beats, i);
+		if(used_beats[j]) {
+			continue;
+		}
+		*index = j;
+		return beats[j];
+	}
+	return -1.0;
+}
+
 double get_beat_position(double *beats, List *nearby_beats, double beat_time) {
 	int len = gfc_list_get_count(nearby_beats);
 	for(int i = len-1; i >= 0; i--) {
@@ -117,27 +162,15 @@ double get_beat_position(double *beats, List *nearby_beats, double beat_time) {
 	return 0.0;
 }
 
-float get_mosher_bounce(PhysicsBody *body) {
-	if(body->tags & TAG_PLAYER) {
-		if(g_selected_powerup == BOUNCY) {
-			return 1.0;
-		}
-		return 0.3;
-	} else {
-		return 0.3;
-	}
-}
-
 extern List *g_nearby_beats;
 extern List *g_nearby_secondary_beats;
 extern double g_beat_interval;
+extern double g_end;
 extern int g_points;
 extern int g_level_points;
 extern int g_game_state;
 
 Bool mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
-	apply_righting(body, delta);
-
 	// check if we are dead
 	if(body->tags & TAG_DEAD) {
 		body->physics_material.bounce = get_mosher_bounce(body);
@@ -153,8 +186,19 @@ Bool mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		return true;
 	}
 
+	apply_righting(body, delta);
+
+	// dont do anything if the game is over
+	if(g_game_state == WON || g_game_state == LOST) {
+		return true;
+	}
+
 	// check if we should die
-	if(fabs(body->rotation) > M_PI/4.0) {
+	float die_threshold = M_PI/4.0;
+	if(body->tags & TAG_PLAYER) {
+		die_threshold = M_PI/3.0;
+	}
+	if(fabs(body->rotation) > die_threshold) {
 		body->tags |= TAG_DEAD;
 		body->timer = 1.0;
 		body->physics_material.bounce = get_mosher_bounce(body);
@@ -170,6 +214,22 @@ Bool mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	return false;
 }
 
+extern Bool g_mods_enabled[NUM_MODS];
+
+void hit_beat() {
+	g_missed_beats = 0;
+}
+
+void miss_beat() {
+	g_missed_beats++;
+	int beat_miss_threshold = g_mods_enabled[PERFECTIONIST] ? 1 : 5;
+	if(g_missed_beats >= beat_miss_threshold) {
+		g_game_state = LOST;
+		music_fade_out();
+		create_end_screen();
+	}
+}
+
 extern double *g_beats;
 extern double *g_secondary_beats;
 extern int *g_used_beats;
@@ -179,6 +239,19 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	if(mosher_update(body, world, delta)) {
 		return;
 	}
+
+	double beat_time = get_beat_time();
+
+	// check for a missed beat
+	int first_beat_idx = -1;
+	double first_beat = get_first_beat(g_beats, g_nearby_beats, g_used_beats, &first_beat_idx);
+
+	if(first_beat_idx != -1 && (beat_time - first_beat)*g_beat_interval > 0.25) {
+		// we missed this beat
+		g_used_beats[first_beat_idx] = 3;
+		miss_beat();
+	}
+
 	// fart/vaccum powerup
 	if((g_selected_powerup == FART || g_selected_powerup == VACCUM) &&
 			body->cooldown <= 0.0 &&
@@ -191,10 +264,12 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 			}
 			Vector2D impulse;
 			vector2d_sub(impulse, body->position, e->position);
+			float dist = vector2d_magnitude(impulse);
+			vector2d_scale(impulse, impulse, 1.0/(dist*dist));
 			if(g_selected_powerup == VACCUM) {
-				vector2d_scale(impulse, impulse, 50.0);
+				vector2d_scale(impulse, impulse, 2500000.0);
 			} else {
-				vector2d_scale(impulse, impulse, -50.0);
+				vector2d_scale(impulse, impulse, -2500000.0);
 			}
 			apply_central_impulse(e, impulse);
 		}
@@ -202,7 +277,12 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	body->cooldown = SDL_max(body->cooldown-delta, 0.0);
 
 	Vector2D impulse;
-	double beat_time = get_beat_time();
+
+	if(beat_time >= g_end || !music_is_playing()) {
+		g_game_state = WON;
+		create_end_screen();
+		return;
+	}
 
 	if(!(world->mouse_buttons&SDL_BUTTON(1) && !world->prev_mouse_buttons&SDL_BUTTON(1))) {
 		body->physics_material.bounce = get_mosher_bounce(body);
@@ -229,15 +309,18 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		color = gfc_color(0.47, 0.85, 0.22, 1.0);
 		p = 3;
 		use_code = 1;
+		hit_beat();
 	} else if (dist < 0.1) {
 		c = sprintf(t, "close");
 		color = gfc_color(0.94, 0.69, 0.25, 1.0);
 		p = 1;
 		use_code = 2;
+		hit_beat();
 	} else {
 		c = sprintf(t, "miss");
 		color = gfc_color(0.96, 0.29, 0.21, 1.0);
 		use_code = 3;
+		miss_beat();
 	}
 
 	if(dist < 0.25) {
@@ -278,6 +361,10 @@ void enemy_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		return;
 	}
 
+	if(body->type == LAZY) {
+		return;
+	}
+
 	Vector2D impulse;
 	double beat_time = get_beat_time();
 
@@ -291,9 +378,20 @@ void enemy_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 
 	if(world->player_idx >= 0) {
 		vector2d_sub(impulse, vector2d(physics_get_body(world, world->player_idx)->position.x, 0.0), body->position);
-		if(false) {
-			//TODO: game modifiers
-			vector2d_scale(impulse, impulse, 2.0);
+		switch(body->type) {
+			case AGGRESSIVE:
+				impulse.x *= 2.0;
+				break;
+			case SCARED:
+				impulse.x *= -1;
+				break;
+			case SHORT:
+				impulse.x *= 0.75;
+				break;
+			default:
+		}
+		if(g_mods_enabled[ANGRY]) {
+			impulse.x *= 2.0;
 		}
 	}
 

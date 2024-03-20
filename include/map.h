@@ -1,14 +1,9 @@
 #include "gfc_list.h"
 #include "gfc_vector.h"
+#include "physics.h"
 
 #ifndef __ALARA_MAP__
 #define __ALARA_MAP__
-
-typedef enum EnemyType {
-	NORMAL,
-	SMALL,
-	BIG,
-} EnemyType;
 
 typedef struct EnemySpawn {
 	double spawn_time;

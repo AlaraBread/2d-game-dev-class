@@ -1,30 +1,18 @@
-# gameframework2d (GF2D)
-a collection of utlitity functions designed to facilitate creating 2D games with SDL2
-This project is specifically intended to function as an educational tool for my students taking 2D Game Programming.
+# moshing simulator
+moshing simulator is a game that i made for dj's 2d game programming class. it is a rhythm game where the goal is to reach the end of the song while knocking as many people over as possible.
 
-FOR FULL FEATURES CHECKOUT THE MASTER BRANCH
-Students: Don't do that.  You are not ready.... yet.
+## controls
+left click - jump
+right click - use ability (if you have an active ability equipped)
 
-The main branch is kept deliberately minimal to allow students to build out systems as they are learning.
-Other branches have more complete system: Collisions, Windows, Armatures, Entities, Particles...
+## how to play
+jump on the beat (there is an indicator that moves over your cursor in case you are unsure where the beat is). jump on secondary beats for extra points (secondary beats are the purple ones). your character will jump towards your mouse.
 
-# Build Process
+points that you earn ingame can be spent in the shop to buy powerups. you can also apply game modifiers that alter the way the game works from the mod menu.
 
-Before you can build the example code we are providing for you, you will need to obtain the libraries required
-by the source code
- - SDL2
- - SDL2_image
- - SDL2_mixer
- - SDL2_ttf
-There are additional sub modules that are needed for this project to work as well, but they can be pulled right from within the project.
-Performable from the following steps from the root of the cloned git repository within a terminal. 
+## compiling on linux
+run `make` in the root directory to compile.
+`make run` will compile and run.
+`make grind` will compile and run within callgrind.
 
-Make sure you fetch submodules: `git submodule update --init --recursive`
-Go into each submodule's src directory and type:
-`make`
-`make static`
-
-Once each submodule has been made you can go into the base project src folder anre simply type:
-`make`
-
-You should now have a `gf2d` binary within the root of your git repository. Executing this will start your game.
+no idea how to compile on anything other than linux.

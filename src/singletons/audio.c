@@ -107,6 +107,13 @@ double get_music_speed() {
 	return g_music_speed * SDL_clamp(g_fade, 0.1, 1.0);
 }
 
+Bool music_is_playing() {
+	if(g_soloud == NULL) {
+		return false;
+	}
+	return Soloud_isValidVoiceHandle(g_soloud, g_music_voice_handle);
+}
+
 void music_fade_out() {
 	g_fading_out = true;
 }

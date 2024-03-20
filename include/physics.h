@@ -52,6 +52,15 @@ typedef struct Collision {
 	int b_idx;
 } Collision;
 
+// for PhysicsBody.type
+typedef enum EnemyType {
+	NORMAL,
+	LAZY,
+	SCARED,
+	AGGRESSIVE,
+	SHORT,
+} EnemyType;
+
 // for PhysicsBody.tags
 #define TAG_PLAYER (1<<0)
 #define TAG_DEAD (1<<1)
@@ -80,6 +89,7 @@ typedef struct PhysicsBody_S {
 	long int tags;
 	long int layer;
 	long int mask;
+	EnemyType type;
 	Sprite *sprite;
 	Vector2D sprite_offset;
 	Vector2D sprite_scale;

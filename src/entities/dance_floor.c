@@ -24,13 +24,12 @@ void spawn_enemy(void *data) {
 		return;
 	}
 	PhysicsWorld *world = rollback_cur_physics(&g_rollback);
-	PhysicsBody *enemy = init_enemy_mosher(world);
+	PhysicsBody *enemy = init_enemy_mosher(world, *enemy_spawn);
 	if(enemy == NULL) {
 		return;
 	}
 	enemy->position = enemy_spawn->spawn_position;
 	enemy->linear_velocity = enemy_spawn->spawn_velocity;
-	// TODO: do something with enemy type
 }
 
 extern int g_mouse_x;

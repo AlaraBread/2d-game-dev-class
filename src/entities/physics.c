@@ -633,7 +633,25 @@ void physics_debug_draw(PhysicsWorld *world) {
 			case CAPSULE:
 			{
 				Color color = gfc_color(1.0, 1.0, 1.0, 1.0);
-				if(body->tags & TAG_PLAYER) {
+				if(body->tags & TAG_ENEMY) {
+					switch(body->type) {
+						case NORMAL:
+							color = gfc_color(0.92, 0.68, 0.31, 1.0);
+							break;
+						case LAZY:
+							color = gfc_color(0.23, 0.84, 0.76, 1.0);
+							break;
+						case SCARED:
+							color = gfc_color(0.52, 0.83, 0.36, 1.0);
+							break;
+						case AGGRESSIVE:
+							color = gfc_color(1.0, 0.60, 0.65, 1.0);
+							break;
+						case SHORT:
+							color = gfc_color(0.89, 0.84, 0.15, 1.0);
+							break;
+					}
+				} else if(body->tags & TAG_PLAYER) {
 					color = gfc_color(0.72, 0.76, 0.98, 1.0);
 				}
 				if(body->tags & TAG_DEAD) {

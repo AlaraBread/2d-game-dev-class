@@ -36,7 +36,7 @@ void create_end_screen() {
 
 	Entity *game_over_label = create_label(vector2d(1200/2, 100), CENTER, CENTER);
 	if(g_game_state == LOST) {
-		strcpy(game_over_label->text, "game over");
+		strcpy(game_over_label->text, "you lost");
 	} else {
 		strcpy(game_over_label->text, "you win");
 	}

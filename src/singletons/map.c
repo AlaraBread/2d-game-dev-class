@@ -6,6 +6,7 @@
 #include "gfc_list.h"
 #include "map.h"
 #include "audio.h"
+#include "mods.h"
 
 SJson *g_map = NULL;
 double *g_secondary_beats = NULL;
@@ -14,6 +15,7 @@ double *g_beats = NULL;
 unsigned int g_beats_len = 0;
 double g_jump_velocity = 0.0;
 const char *g_song_filename = NULL;
+double g_end;
 int g_high_score = 0;
 EnemySpawn *g_enemy_spawns;
 unsigned int g_enemy_spawns_len;
@@ -22,6 +24,7 @@ int *g_used_beats = NULL;
 int *g_used_secondary_beats = NULL;
 
 extern double g_bpm;
+extern Bool g_mods_enabled[NUM_MODS];
 
 int double_cmp (const void *a, const void *b) {
 	int a_d = *((double *)a);
@@ -239,6 +242,9 @@ void map_load(const char *filename) {
 			return;
 		}
 		g_jump_velocity = jump_velocity_f;
+		if(g_mods_enabled[HOPPY]) {
+			g_jump_velocity *= 2.0;
+		}
 	}
 	{
 		SJson *bpm = sj_object_get_value(g_map, "bpm");
@@ -270,14 +276,26 @@ void map_load(const char *filename) {
 		}
 	}
 	{
+		SJson *end = sj_object_get_value(g_map, "end");
+		if(!end) {
+			g_end = INFINITY;
+		} else {
+			float end_f;
+			if(!sj_get_float_value(end, &end_f)) {
+				g_end = INFINITY;
+			} else {
+				g_end = end_f;
+			}
+		}
+	}
+	{
 		SJson *high_score = sj_object_get_value(g_map, "high_score");
 		if(!high_score) {
 			g_high_score = 0;
-			return;
-		}
-		if(!sj_get_integer_value(high_score, &g_high_score)) {
-			g_high_score = 0;
-			return;
+		} else {
+			if(!sj_get_integer_value(high_score, &g_high_score)) {
+				g_high_score = 0;
+			}
 		}
 	}
 }
