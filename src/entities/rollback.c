@@ -39,7 +39,7 @@ PhysicsWorld *rollback_step(Rollback *rollback, float delta) {
 	PhysicsWorld *cur = rollback_cur_physics(rollback);
 	PhysicsWorld *next = rollback_next_physics(rollback);
 	physics_copy(cur, next);
-	//memcpy(next->keys, g_keys, sizeof(Uint8)*SDL_NUM_SCANCODES);
+	memcpy(next->keys, g_keys, sizeof(Uint8)*SDL_NUM_SCANCODES);
 	physics_step(next, delta);
 	rollback->buffer_index = posmod(rollback->buffer_index+1, rollback->buffer_size);
 	rollback->cutoff_index = posmod(rollback->buffer_index+1, rollback->buffer_size);
