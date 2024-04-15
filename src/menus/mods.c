@@ -1,18 +1,18 @@
 #include "gfc_types.h"
 #include "gf2d_draw.h"
 #include "rollback.h"
-#include "entity.h"
+#include "ui_element.h"
 #include "main_menu.h"
 #include "mods.h"
 
-void back_button_clicked(Entity *back_button) {
+void back_button_clicked(UIElement *back_button) {
 	main_menu();
 }
 
 Bool g_mods_enabled[NUM_MODS] = {false};
 char g_mod_names[NUM_MODS][64] = {"faster", "slower", "hoppy", "angry", "perfectionist"};
 
-void mod_button_clicked(Entity *mod_button) {
+void mod_button_clicked(UIElement *mod_button) {
 	g_mods_enabled[mod_button->index] = !g_mods_enabled[mod_button->index];
 	if(mod_button->index == FASTER) {
 		g_mods_enabled[SLOWER] = false;
@@ -21,7 +21,7 @@ void mod_button_clicked(Entity *mod_button) {
 	}
 }
 
-void draw_mod_button(Entity *mod_button) {
+void draw_mod_button(UIElement *mod_button) {
 	draw_text_rect(mod_button);
 	if(!g_mods_enabled[mod_button->index]) {
 		return;
@@ -49,11 +49,11 @@ void mods() {
 	physics_clear_bodies(world);
 	clear_entities();
 
-	Entity *back_button = create_button(vector2d(1200/2, 720-100), vector2d(300, 100), "back");
+	UIElement *back_button = create_button(vector2d(1200/2, 720-100), vector2d(300, 100), "back");
 	back_button->click = back_button_clicked;
 
 	for(int i = 0; i < NUM_MODS; i++) {
-		Entity *mod_button = create_button(vector2d(1200/2, 100+i*(75+20)), vector2d(400, 75), g_mod_names[i]);
+		UIElement *mod_button = create_button(vector2d(1200/2, 100+i*(75+20)), vector2d(400, 75), g_mod_names[i]);
 		mod_button->font_size = 2;
 		mod_button->draw = draw_mod_button;
 		mod_button->index = i;

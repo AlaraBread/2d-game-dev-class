@@ -2,23 +2,23 @@
 #include "simple_json.h"
 #include "simple_logger.h"
 #include "rollback.h"
-#include "entity.h"
+#include "ui_element.h"
 #include "dance_floor.h"
 #include "main_menu.h"
 
 extern Rollback g_rollback;
 
-static void back_button_clicked(Entity *back_button) {
+static void back_button_clicked(UIElement *back_button) {
 	main_menu();
 }
 
 char g_map_filename[512];
-void map_button_clicked(Entity *map_button) {
+void map_button_clicked(UIElement *map_button) {
 	strcpy(g_map_filename, map_button->filename);
 	dance_floor(g_map_filename);
 }
 
-void draw_map_button(Entity *map_button) {
+void draw_map_button(UIElement *map_button) {
 	draw_text_rect(map_button);
 	if(map_button->index != -1) {
 		TextLine high_score;
@@ -44,7 +44,7 @@ void list_map(char filename[256]) {
 		high_score = -1;
 	}
 
-	Entity *button = create_button(vector2d(1200/2-200, 100+map_idx*70), vector2d(600, 50), title);
+	UIElement *button = create_button(vector2d(1200/2-200, 100+map_idx*70), vector2d(600, 50), title);
 	button->font_size = 2;
 	button->click = map_button_clicked;
 	strcpy(button->filename, full_path);
@@ -76,6 +76,6 @@ void level_select() {
 		slog("Couldn't open map directory.");
 	}
 
-	Entity *back_button = create_button(vector2d(1200/2, 720-100), vector2d(300, 100), "Back");
+	UIElement *back_button = create_button(vector2d(1200/2, 720-100), vector2d(300, 100), "Back");
 	back_button->click = back_button_clicked;
 }

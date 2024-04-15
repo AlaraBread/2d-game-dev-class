@@ -1,5 +1,5 @@
 #include "rollback.h"
-#include "entity.h"
+#include "ui_element.h"
 #include "main_menu.h"
 #include "shop.h"
 #include "points.h"
@@ -13,20 +13,20 @@ int g_powerup_costs[NUM_POWERUPS] = {100, 200, 300, 400, 500};
 Bool g_powerup_ownership[NUM_POWERUPS] = {false};
 int g_selected_powerup = -1;
 
-static Entity *g_points_label;
+static UIElement *g_points_label;
 
-static void back_button_clicked(Entity *back_button) {
+static void back_button_clicked(UIElement *back_button) {
 	main_menu();
 }
 
-void draw_powerup_button(Entity *button) {
+void draw_powerup_button(UIElement *button) {
 	draw_text_rect(button);
 	if(g_selected_powerup == button->index) {
 		font_render_aligned("selected -> ", 3, button->color, gfc_sdl_rect(button->position.x-button->size.x, button->position.y, button->size.x, button->size.y), END, CENTER);
 	}
 }
 
-void update_powerup(Entity *powerup_button) {
+void update_powerup(UIElement *powerup_button) {
 	if(g_powerup_ownership[powerup_button->index]) {
 		sprintf(powerup_button->text, " %s", g_powerup_names[powerup_button->index]);
 	} else {
@@ -34,7 +34,7 @@ void update_powerup(Entity *powerup_button) {
 	}
 }
 
-void powerup_button_clicked(Entity *powerup_button) {
+void powerup_button_clicked(UIElement *powerup_button) {
 	if(!g_powerup_ownership[powerup_button->index]) {
 		if(g_points < g_powerup_costs[powerup_button->index]) {
 			return;
@@ -56,11 +56,11 @@ void shop() {
 	clear_entities();
 	g_level_points = -1;
 
-	Entity *back_button = create_button(vector2d(1200/2, 720-100), vector2d(300, 100), "back");
+	UIElement *back_button = create_button(vector2d(1200/2, 720-100), vector2d(300, 100), "back");
 	back_button->click = back_button_clicked;
 
 	for(int i = 0; i < NUM_POWERUPS; i++) {
-		Entity *powerup_button = create_button(vector2d(1200/2, 100+i*(75+20)), vector2d(500, 75), g_powerup_names[i]);
+		UIElement *powerup_button = create_button(vector2d(1200/2, 100+i*(75+20)), vector2d(500, 75), g_powerup_names[i]);
 		powerup_button->text_align_x = START;
 		powerup_button->font_size = 2;
 		powerup_button->draw = draw_powerup_button;

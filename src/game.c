@@ -7,7 +7,7 @@
 #include "audio.h"
 #include "mosher.h"
 #include "font.h"
-#include "entity.h"
+#include "ui_element.h"
 #include "main_menu.h"
 #include "points.h"
 #include "save.h"

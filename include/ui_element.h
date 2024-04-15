@@ -37,22 +37,22 @@ typedef struct Entity_S {
 	void (*click)(struct Entity_S *self);
 	void (*mouse_down)(struct Entity_S *self);
 	void (*mouse_up)(struct Entity_S *self);
-} Entity;
+} UIElement;
 
-void init_entity_system(unsigned int max_entities);
-Entity *allocate_entity();
-void free_entity(Entity *ent);
-void clear_entities();
+void init_ui_system(unsigned int max_entities);
+UIElement *allocate_ui_element();
+void free_ui(UIElement *element);
+void clear_ui_elements();
 void clear_ui_group(int group);
-int get_entity_id(Entity *ent);
-Entity *get_entity(int id);
-void draw_text_rect(Entity *ent);
-void button_mouse_enter(Entity *button);
-void button_mouse_exit(Entity *button);
-void button_mouse_down(Entity *button);
-void button_mouse_up(Entity *button);
-Entity *create_button(Vector2D position, Vector2D size, const char *text);
-Entity *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y);
-void entity_frame();
+int get_ui_element_id(UIElement *element);
+UIElement *get_ui_element(int id);
+void draw_text_rect(UIElement *element);
+void button_mouse_enter(UIElement *button);
+void button_mouse_exit(UIElement *button);
+void button_mouse_down(UIElement *button);
+void button_mouse_up(UIElement *button);
+UIElement *create_button(Vector2D position, Vector2D size, const char *text);
+UIElement *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y);
+void ui_element_frame();
 
 #endif

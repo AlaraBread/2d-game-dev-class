@@ -5,7 +5,7 @@
 #include "mosher.h"
 #include "audio.h"
 #include "map.h"
-#include "entity.h"
+#include "ui_element.h"
 #include "audio.h"
 #include "gf2d_draw.h"
 #include "simple_json_list.h"
@@ -34,7 +34,7 @@ void spawn_enemy(void *data) {
 
 extern int g_mouse_x;
 extern int g_mouse_y;
-Entity *g_dance_floor;
+UIElement *g_dance_floor;
 extern double *g_beats;
 extern double *g_secondary_beats;
 extern int *g_used_beats;
@@ -89,10 +89,10 @@ extern int g_game_state;
 
 List *g_nearby_beats;
 List *g_nearby_secondary_beats;
-void dance_floor_think(Entity *ent) {
+void dance_floor_think(UIElement *element) {
 	if(!g_paused && g_game_state == PLAYING) {
-		ent->position.x = g_mouse_x;
-		ent->position.y = g_mouse_y;
+		element->position.x = g_mouse_x;
+		element->position.y = g_mouse_y;
 	}
 	double beat_time = get_beat_time();
 	List *spawns = map_get_spawns(beat_time);
@@ -122,7 +122,7 @@ void dance_floor_think(Entity *ent) {
 }
 
 extern int g_level_points;
-void dance_floor_cleanup(Entity *dance_floor) {
+void dance_floor_cleanup(UIElement *dance_floor) {
 	SJson *file = sj_load(dance_floor->filename);
 	int stored_high_score;
 	if(!sj_get_integer_value(sj_object_get_value(file, "high_score"), &stored_high_score)) {
@@ -136,12 +136,12 @@ void dance_floor_cleanup(Entity *dance_floor) {
 	sj_free(file);
 }
 
-Entity *create_dance_floor_entity() {
-	Entity *ent = allocate_entity();
-	ent->think = dance_floor_think;
-	ent->cleanup = dance_floor_cleanup;
-	g_dance_floor = ent;
-	return ent;
+UIElement *create_dance_floor_element() {
+	UIElement *element = allocate_entity();
+	element->think = dance_floor_think;
+	element->cleanup = dance_floor_cleanup;
+	g_dance_floor = element;
+	return element;
 }
 
 extern int g_level_points;
@@ -156,8 +156,8 @@ void dance_floor(char *map_filename) {
 
 	g_game_state = PLAYING;
 
-	Entity *dance_floor_entity = create_dance_floor_entity();
-	strcpy(dance_floor_entity->filename, map_filename);
+	UIElement *dance_floor = create_dance_floor_element();
+	strcpy(dance_floor->filename, map_filename);
 	g_level_points = 0;
 	create_points_label();
 
