@@ -12,7 +12,7 @@ void tmp_text_update(UIElement *element) {
 
 UIElement *init_tmp_text(char *text, int length, Vector2D position, Color color) {
 	UIElement *element = allocate_ui_element();
-	memcpy(element->text, text, length);
+	memcpy(element->text, text, sizeof(char)*length);
 	element->position = position;
 	element->text_align_x = CENTER;
 	element->text_align_y = CENTER;

@@ -201,6 +201,6 @@ UIElement *create_button(Vector2D position, Vector2D size, const char *text) {
 	button->font_size = 5;
 	button->text_align_x = CENTER;
 	button->text_align_y = CENTER;
-	memcpy(button->text, text, strlen(text)+1);
+	memcpy(button->text, text, sizeof(char)*(strlen(text)+1));
 	return button;
 }
