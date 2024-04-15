@@ -23,7 +23,7 @@ extern Rollback g_rollback;
 void main_menu() {
 	PhysicsWorld *world = rollback_cur_physics(&g_rollback);
 	physics_clear_bodies(world);
-	clear_entities();
+	clear_ui_elements();
 	UIElement *title_label = create_label(vector2d(1200/2, 100), CENTER, CENTER);
 	strcpy(title_label->text, "moshing simulator");
 	title_label->font_size = 10;

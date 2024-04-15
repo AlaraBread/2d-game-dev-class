@@ -2,6 +2,7 @@
 #include "ui_element.h"
 #include "font.h"
 #include "util.h"
+#include "ui_element.h"
 
 unsigned int g_max_ui_elements;
 unsigned int g_last_allocated_ui_element;
@@ -16,10 +17,8 @@ void init_ui_system(unsigned int max_elements) {
 	atexit(free_ui_system);
 }
 
-void free_ui(UIElement *element);
-
 void free_ui_system() {
-	for(int i = 0; i < g_max_ui_elements; i++) free_ui(&g_ui_elements[i]);
+	for(int i = 0; i < g_max_ui_elements; i++) free_ui_element(&g_ui_elements[i]);
 	free(g_ui_elements);
 }
 
@@ -40,7 +39,7 @@ UIElement *allocate_ui_element() {
 }
 
 void clear_ui_elements() {
-	for(int i = 0; i < g_max_ui_elements; i++) free_ui(&g_ui_elements[i]);
+	for(int i = 0; i < g_max_ui_elements; i++) free_ui_element(&g_ui_elements[i]);
 	memset(g_ui_elements, 0, sizeof(UIElement) * g_max_ui_elements);
 }
 
@@ -48,12 +47,12 @@ void clear_ui_group(int group) {
 	for(int i = 0; i < g_max_ui_elements; i++) {
 		UIElement *element = &g_ui_elements[i];
 		if(element->group == group) {
-			free_ui(element);
+			free_ui_element(element);
 		}
 	}
 }
 
-void free_ui(UIElement *element) {
+void free_ui_element(UIElement *element) {
 	if(!element->inuse) {
 		return;
 	}
@@ -113,7 +112,7 @@ void ui_element_mouse_events(UIElement *element) {
 	}
 }
 
-void ui_element_frame() {
+void ui_frame() {
 	for(int i = 0; i < g_max_ui_elements; i++) {
 		UIElement *element = &g_ui_elements[i];
 		if(!element->inuse) {

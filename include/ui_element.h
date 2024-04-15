@@ -41,7 +41,7 @@ typedef struct Entity_S {
 
 void init_ui_system(unsigned int max_entities);
 UIElement *allocate_ui_element();
-void free_ui(UIElement *element);
+void free_ui_element(UIElement *element);
 void clear_ui_elements();
 void clear_ui_group(int group);
 int get_ui_element_id(UIElement *element);
@@ -53,6 +53,6 @@ void button_mouse_down(UIElement *button);
 void button_mouse_up(UIElement *button);
 UIElement *create_button(Vector2D position, Vector2D size, const char *text);
 UIElement *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y);
-void ui_element_frame();
+void ui_frame();
 
 #endif

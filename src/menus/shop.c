@@ -53,7 +53,7 @@ void powerup_button_clicked(UIElement *powerup_button) {
 void shop() {
 	PhysicsWorld *world = rollback_cur_physics(&g_rollback);
 	physics_clear_bodies(world);
-	clear_entities();
+	clear_ui_elements();
 	g_level_points = -1;
 
 	UIElement *back_button = create_button(vector2d(1200/2, 720-100), vector2d(300, 100), "back");

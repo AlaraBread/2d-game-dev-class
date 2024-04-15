@@ -137,7 +137,7 @@ void dance_floor_cleanup(UIElement *dance_floor) {
 }
 
 UIElement *create_dance_floor_element() {
-	UIElement *element = allocate_entity();
+	UIElement *element = allocate_ui_element();
 	element->think = dance_floor_think;
 	element->cleanup = dance_floor_cleanup;
 	g_dance_floor = element;
@@ -152,7 +152,7 @@ int g_game_state = PLAYING;
 void dance_floor(char *map_filename) {
 	PhysicsWorld *world = rollback_cur_physics(&g_rollback);
 	physics_clear_bodies(world);
-	clear_entities();
+	clear_ui_elements();
 
 	g_game_state = PLAYING;
 

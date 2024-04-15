@@ -534,10 +534,10 @@ void physics_copy(PhysicsWorld *from, PhysicsWorld *to) {
 		to->keys = keys;
 	}
 	if(from->physics_bodies) {
-		memcpy(physics_bodies, from->physics_bodies, from->max_physics_bodies);
+		memcpy(physics_bodies, from->physics_bodies, sizeof(PhysicsBody)*from->max_physics_bodies);
 	}
 	if(from->keys) {
-		memcpy(keys, from->keys, SDL_NUM_SCANCODES);
+		memcpy(keys, from->keys, sizeof(Uint8)*SDL_NUM_SCANCODES);
 	}
 	to->keys = keys;
 	to->physics_bodies = physics_bodies;

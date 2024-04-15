@@ -58,7 +58,7 @@ void list_map(char filename[256]) {
 void level_select() {
 	PhysicsWorld *world = rollback_cur_physics(&g_rollback);
 	physics_clear_bodies(world);
-	clear_entities();
+	clear_ui_elements();
 	map_idx = 0;
 
 	DIR *dp;

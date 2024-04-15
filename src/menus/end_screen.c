@@ -26,9 +26,7 @@ extern Rollback g_rollback;
 void create_end_screen() {
 	set_paused(false);
 
-	PhysicsWorld *world = rollback_cur_physics(&g_rollback);
-
-	UIElement *tint = allocate_entity();
+	UIElement *tint = allocate_ui_element();
 	tint->draw = draw_text_rect;
 	tint->size = vector2d(1200, 720);
 	tint->bg_color = gfc_color(0.0, 0.0, 0.0, 0.3);

@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 	gf2d_sprite_init(1024);
 	SDL_ShowCursor(SDL_ENABLE);
 
-	init_entity_system(500);
+	init_ui_system(500);
 	init_audio();
 	font_init();
 	load();
@@ -58,8 +58,7 @@ int main(int argc, char *argv[])
 	g_prev_mouse_buttons = 0;
 
 	/*main game loop*/
-	while(1)
-	{
+	while(1) {
 		Bool done = false;
 		SDL_Event event;
 		while(SDL_PollEvent(&event)) {
@@ -86,7 +85,7 @@ int main(int argc, char *argv[])
 		gf2d_graphics_clear_screen();// clears drawing buffers
 
 		run_physics_frame();
-		entity_frame();
+		ui_frame();
 
 		g_prev_mouse_buttons = g_mouse_buttons;
 		g_prev_mouse_x = g_mouse_x;

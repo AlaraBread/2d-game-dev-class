@@ -22,7 +22,7 @@ static void restart_clicked(UIElement *restart_button) {
 }
 
 void create_pause_menu() {
-	UIElement *tint = allocate_entity();
+	UIElement *tint = allocate_ui_element();
 	tint->draw = draw_text_rect;
 	tint->size = vector2d(1200, 720);
 	tint->bg_color = gfc_color(0.0, 0.0, 0.0, 0.3);
