@@ -504,8 +504,10 @@ PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate) {
 	world.max_physics_bodies = max_physics_bodies;
 	if(allocate) {
 		world.physics_bodies = calloc(sizeof(PhysicsBody), max_physics_bodies);
+		world.keys = calloc(sizeof(Uint8), SDL_NUM_SCANCODES);
 	} else {
 		world.physics_bodies = NULL;
+		world.keys = NULL;
 	}
 	world.last_allocated_body = max_physics_bodies-1;
 	world.floor_idx = -1;
@@ -514,7 +516,31 @@ PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate) {
 }
 
 void free_physics(PhysicsWorld *world) {
-	free(world->physics_bodies);
+	if(world->physics_bodies) {
+		free(world->physics_bodies);
+	}
+}
+
+void physics_copy(PhysicsWorld *from, PhysicsWorld *to) {
+	PhysicsBody *physics_bodies = to->physics_bodies;
+	Uint8 *keys = to->keys;
+	memcpy(to, from, sizeof(PhysicsWorld));
+	if(physics_bodies == NULL) {
+		physics_bodies = calloc(sizeof(PhysicsBody), from->max_physics_bodies);
+		to->physics_bodies = physics_bodies;
+	}
+	if(keys == NULL) {
+		keys = calloc(sizeof(Uint8), SDL_NUM_SCANCODES);
+		to->keys = keys;
+	}
+	if(from->physics_bodies) {
+		memcpy(physics_bodies, from->physics_bodies, from->max_physics_bodies);
+	}
+	if(from->keys) {
+		memcpy(keys, from->keys, SDL_NUM_SCANCODES);
+	}
+	to->keys = keys;
+	to->physics_bodies = physics_bodies;
 }
 
 PhysicsBody *allocate_physics_body(PhysicsWorld *world) {

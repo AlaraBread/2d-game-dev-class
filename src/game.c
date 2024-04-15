@@ -47,11 +47,11 @@ int main(int argc, char *argv[])
 
 	init_entity_system(500);
 	init_audio();
-	init_font();
+	font_init();
 	load();
 
 	// physics setup
-	g_rollback = init_rollback(1, 15);
+	g_rollback = init_rollback(1000, 15);
 
 	main_menu();
 

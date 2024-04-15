@@ -5,21 +5,21 @@
 #include "gf2d_graphics.h"
 #include "font.h"
 
-TTF_Font *g_fonts_regular[NUM_FONTS];
+TTF_Font *g_fonts[NUM_FONTS];
 
 void font_free();
 
-void init_font() {
+void font_init() {
 	TTF_Init();
 	for(int i = 0; i < NUM_FONTS; i++) {
-		g_fonts_regular[i] = TTF_OpenFont("fonts/MadimiOne-Regular.ttf", i*10+10);
+		g_fonts[i] = TTF_OpenFont("fonts/MadimiOne-Regular.ttf", i*10+10);
 	}
 	atexit(font_free);
 }
 
 void font_render_aligned(const char *text, int size, Color color, SDL_Rect rect, TextAlign x_align, TextAlign y_align) {
 	int w, h;
-	TTF_SizeUTF8(g_fonts_regular[size], text, &w, &h);
+	TTF_SizeUTF8(g_fonts[size], text, &w, &h);
 	Vector2D position;
 	switch(x_align) {
 		case CENTER:
@@ -48,8 +48,8 @@ void font_render_aligned(const char *text, int size, Color color, SDL_Rect rect,
 
 void font_render(const char *text, int size, Color color, Vector2D position) {
 	int w, h;
-	TTF_SizeUTF8(g_fonts_regular[size], text, &w, &h);
-	SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(g_fonts_regular[size], text, gfc_color_to_sdl(color), 0);
+	TTF_SizeUTF8(g_fonts[size], text, &w, &h);
+	SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(g_fonts[size], text, gfc_color_to_sdl(color), 0);
 	SDL_Renderer *renderer = gf2d_graphics_get_renderer();
 	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
 	SDL_Rect dstrect = gfc_sdl_rect(position.x, position.y, w, h);
@@ -60,7 +60,7 @@ void font_render(const char *text, int size, Color color, Vector2D position) {
 
 void font_free() {
 	for(int i = 0; i < NUM_FONTS; i++) {
-		TTF_CloseFont(g_fonts_regular[i]);
+		TTF_CloseFont(g_fonts[i]);
 	}
 	TTF_Quit();
 }

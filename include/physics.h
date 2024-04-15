@@ -103,7 +103,7 @@ typedef struct PhysicsWorld_S {
 	unsigned int max_physics_bodies;
 	unsigned int last_allocated_body;
 	float gravity;
-	const Uint8 * keys;
+	Uint8 * keys;
 	Uint32 prev_mouse_buttons;
 	Uint32 mouse_buttons;
 	int mouse_x, mouse_y;
@@ -111,6 +111,7 @@ typedef struct PhysicsWorld_S {
 } PhysicsWorld;
 
 PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate);
+void physics_copy(PhysicsWorld *from, PhysicsWorld *to);
 PhysicsBody *allocate_physics_body(PhysicsWorld *world);
 int physics_get_body_id(PhysicsWorld *world, PhysicsBody *body);
 PhysicsBody *physics_get_body(PhysicsWorld *world, int id);

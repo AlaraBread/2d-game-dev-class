@@ -52,7 +52,7 @@ void map_load(const char *filename) {
 		}
 		SJList *secondary_beats = secondary_beats_obj->v.array;
 		unsigned int len = sj_list_get_count(secondary_beats);
-		g_secondary_beats = calloc(len, sizeof(double));
+		g_secondary_beats = calloc(sizeof(double), len);
 		g_secondary_beats_len = len;
 		g_used_secondary_beats = calloc(sizeof(int), len);
 		if(!g_secondary_beats) {
@@ -86,7 +86,7 @@ void map_load(const char *filename) {
 		}
 		SJList *beats = beats_obj->v.array;
 		unsigned int len = sj_list_get_count(beats);
-		g_beats = calloc(len, sizeof(double));
+		g_beats = calloc(sizeof(double), len);
 		g_beats_len = len;
 		g_used_beats = calloc(sizeof(int), len);
 		if(!g_beats) {
@@ -120,7 +120,7 @@ void map_load(const char *filename) {
 		}
 		SJList *enemy_spawns = enemy_spawns_obj->v.array;
 		unsigned int len = sj_list_get_count(enemy_spawns);
-		g_enemy_spawns = calloc(len, sizeof(EnemySpawn));
+		g_enemy_spawns = calloc(sizeof(EnemySpawn), len);
 		g_enemy_spawns_len = len;
 		if(!g_enemy_spawns) {
 			slog("Ran out of memory :(");

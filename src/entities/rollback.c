@@ -17,37 +17,32 @@ void free_rollback(Rollback *rollback) {
 	free(rollback->buffer);
 }
 
+// https://stackoverflow.com/questions/14997165/fastest-way-to-get-a-positive-modulo-in-c-c
+inline int posmod(int i, int n) {
+    return (i % n + n) % n;
+}
+
 inline PhysicsWorld *rollback_next_physics(Rollback *rollback) {
-	return &rollback->buffer[(rollback->buffer_index+1)%rollback->buffer_size];
+	return &rollback->buffer[posmod(rollback->buffer_index+1, rollback->buffer_size)];
 }
 
 inline PhysicsWorld *rollback_cur_physics(Rollback *rollback) {
 	return &rollback->buffer[rollback->buffer_index];
 }
 
-// https://stackoverflow.com/questions/14997165/fastest-way-to-get-a-positive-modulo-in-c-c
-inline int posmod(int i, int n) {
-    return (i % n + n) % n;
-}
-
 inline PhysicsWorld *rollback_prev_physics(Rollback *rollback) {
 	return &rollback->buffer[posmod(rollback->buffer_index-1, rollback->buffer_size)];
 }
 
+extern const Uint8 *g_keys;
 PhysicsWorld *rollback_step(Rollback *rollback, float delta) {
 	PhysicsWorld *cur = rollback_cur_physics(rollback);
-	PhysicsWorld new;
-	memcpy(&new, cur, sizeof(PhysicsWorld));
 	PhysicsWorld *next = rollback_next_physics(rollback);
-	new.physics_bodies = next->physics_bodies;
-	if(new.physics_bodies == NULL) {
-		new.physics_bodies = calloc(sizeof(PhysicsBody), new.max_physics_bodies);
-	}
-	memcpy(new.physics_bodies, cur->physics_bodies, sizeof(PhysicsBody)*new.max_physics_bodies);
-	memcpy(next, &new, sizeof(PhysicsWorld));
+	physics_copy(cur, next);
+	memcpy(next->keys, g_keys, SDL_NUM_SCANCODES);
 	physics_step(next, delta);
-	rollback->buffer_index = (rollback->buffer_index+1)%rollback->buffer_size;
-	rollback->cutoff_index = (rollback->buffer_index+1)%rollback->buffer_size;
+	rollback->buffer_index = posmod(rollback->buffer_index+1, rollback->buffer_size);
+	rollback->cutoff_index = posmod(rollback->buffer_index+1, rollback->buffer_size);
 	return next;
 }
 
