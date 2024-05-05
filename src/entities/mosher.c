@@ -66,16 +66,24 @@ PhysicsBody *init_enemy_mosher(PhysicsWorld *world, EnemySpawn spawn) {
 		case SHORT:
 			enemy->shape.capsule.height *= 0.5;
 			enemy->shape.capsule.radius *= 1.25;
+			enemy->sprite = gf2d_sprite_load_image("images/short.png");
 			break;
 		case AGGRESSIVE:
 			enemy->shape.capsule.height *= 0.8;
+			enemy->sprite = gf2d_sprite_load_image("images/angry.png");
 			break;
 		case LAZY:
 			enemy->shape.capsule.height *= 1.3;
+			enemy->sprite = gf2d_sprite_load_image("images/lazy.png");
 			enemy->mass *= 0.25;
 			com_ratio = 0.75;
 			break;
-		default:
+		case NORMAL:
+			enemy->sprite = gf2d_sprite_load_image("images/normal.png");
+			break;
+		case SCARED:
+			enemy->sprite = gf2d_sprite_load_image("images/scared.png");
+			break;
 	}
 	float l = enemy->shape.capsule.height+enemy->shape.capsule.radius*2.0;
 	enemy->moment_of_inertia = enemy->mass*l*l/3.0;
@@ -85,6 +93,7 @@ PhysicsBody *init_enemy_mosher(PhysicsWorld *world, EnemySpawn spawn) {
 	enemy->layer = 1;
 	enemy->tags = TAG_ENEMY;
 	enemy->physics_material.bounce = get_mosher_bounce(enemy);
+	enemy->sprite_offset = vector2d(-enemy->shape.capsule.radius, -enemy->shape.capsule.height/2-enemy->shape.capsule.radius);
 	return enemy;
 }
 
@@ -113,6 +122,8 @@ PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 	player->update = player_update;
 	player->mask = 1;
 	player->layer = 1;
+	player->sprite = gf2d_sprite_load_image("images/player.png");
+	player->sprite_offset = vector2d(-player->shape.capsule.radius, -player->shape.capsule.height/2-player->shape.capsule.radius);
 	world->player_idx = physics_get_body_id(world, player);
 	if(g_selected_powerup == STRONG_LEGS) {
 		player->gravity_scale = STRONG_LEGS_FACTOR;
@@ -181,7 +192,7 @@ Bool mosher_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 				g_game_state = LOST;
 				create_end_screen();
 			}
-			body->inuse = 0;
+			physics_body_free(body);
 		}
 		return true;
 	}

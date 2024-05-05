@@ -134,17 +134,24 @@ void dance_floor_cleanup(UIElement *dance_floor) {
 		sj_save(file, dance_floor->filename);
 	}
 	sj_free(file);
+	gf2d_sprite_free(dance_floor->sprite);
+}
+
+void draw_dance_floor_background(UIElement *dance_floor) {
+	gf2d_sprite_draw_image(dance_floor->sprite, vector2d(0.0, 0.0));
 }
 
 UIElement *create_dance_floor_element() {
 	UIElement *element = allocate_ui_element();
 	element->think = dance_floor_think;
 	element->cleanup = dance_floor_cleanup;
+	element->predraw = draw_dance_floor_background;
 	g_dance_floor = element;
 	return element;
 }
 
 extern int g_level_points;
+extern const char *g_background_filename;
 extern Bool g_mods_enabled[NUM_MODS];
 long int g_prev_points = -1;
 int g_game_state = PLAYING;
@@ -180,4 +187,5 @@ void dance_floor(char *map_filename) {
 	} else {
 		set_music_speed(1.0);
 	}
+	dance_floor->sprite = gf2d_sprite_load_image(g_background_filename);
 }

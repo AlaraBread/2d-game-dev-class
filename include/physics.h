@@ -120,6 +120,7 @@ void apply_impulse(PhysicsBody *body, Vector2D impulse, Vector2D point);
 void apply_central_force(PhysicsBody *body, Vector2D force, float delta);
 void apply_force(PhysicsBody *body, Vector2D force, Vector2D point, float delta);
 void free_physics(PhysicsWorld *world);
+void physics_body_free(PhysicsBody *body);
 void physics_step(PhysicsWorld *world, float delta);
 void drop_to_floor(PhysicsBody *body, PhysicsWorld *world);
 void physics_draw_sprites(PhysicsWorld *world);

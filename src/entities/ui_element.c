@@ -112,6 +112,18 @@ void ui_element_mouse_events(UIElement *element) {
 	}
 }
 
+void ui_predraw() {
+	for(int i = 0; i < g_max_ui_elements; i++) {
+		UIElement *element = &g_ui_elements[i];
+		if(!element->inuse) {
+			continue;
+		}
+		if(element->predraw) {
+			element->predraw(element);
+		}
+	}
+}
+
 void ui_frame() {
 	for(int i = 0; i < g_max_ui_elements; i++) {
 		UIElement *element = &g_ui_elements[i];

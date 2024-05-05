@@ -515,7 +515,17 @@ PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate) {
 	return world;
 }
 
+void physics_body_free(PhysicsBody *body) {
+	if(body->sprite) {
+		gf2d_sprite_free(body->sprite);
+	}
+	body->inuse = false;
+}
+
 void free_physics(PhysicsWorld *world) {
+	for(int i = 0; i < world->max_physics_bodies; i++) {
+		physics_body_free(&world->physics_bodies[i]);
+	}
 	if(world->physics_bodies) {
 		free(world->physics_bodies);
 	}
@@ -553,6 +563,7 @@ PhysicsBody *allocate_physics_body(PhysicsWorld *world) {
 			memset(body, 0, sizeof(PhysicsBody));
 			body->inuse = true;
 			body->gravity_scale = 1.0;
+			body->sprite_scale = vector2d(1.0, 1.0);
 			return body;
 		}
 	}
@@ -560,6 +571,9 @@ PhysicsBody *allocate_physics_body(PhysicsWorld *world) {
 }
 
 void physics_clear_bodies(PhysicsWorld *world) {
+	for(int i = 0; i < world->max_physics_bodies; i++) {
+		physics_body_free(&world->physics_bodies[i]);
+	}
 	memset(world->physics_bodies, 0, sizeof(PhysicsBody) * world->max_physics_bodies);
 }
 
@@ -604,10 +618,14 @@ void physics_draw_sprites(PhysicsWorld *world) {
 			continue;
 		}
 		float rotation = body->rotation*(180.0/M_PI);
-		
+
 		Vector2D position;
 		vector2d_add(position, body->position, vector2d_rotate(body->sprite_offset, body->rotation));
 
+		Color color = gfc_color(1.0, 1.0, 1.0, 1.0);
+		if(body->tags & TAG_DEAD) {
+			color.a = body->timer;
+		}
 		gf2d_sprite_draw(
 				body->sprite,
 				position,
@@ -615,7 +633,7 @@ void physics_draw_sprites(PhysicsWorld *world) {
 				NULL,
 				&rotation,
 				NULL,
-				NULL,
+				&color,
 				0);
 	}
 }

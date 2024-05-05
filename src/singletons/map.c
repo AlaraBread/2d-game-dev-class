@@ -15,6 +15,7 @@ double *g_beats = NULL;
 unsigned int g_beats_len = 0;
 double g_jump_velocity = 0.0;
 const char *g_song_filename = NULL;
+const char *g_background_filename = NULL;
 double g_end;
 int g_high_score = 0;
 EnemySpawn *g_enemy_spawns;
@@ -276,6 +277,20 @@ void map_load(const char *filename) {
 		}
 	}
 	{
+		SJson *background = sj_object_get_value(g_map, "background");
+		if(!background) {
+			slog("No background specified");
+			map_free();
+			return;
+		}
+		g_background_filename = sj_get_string_value(background);
+		if(!g_background_filename) {
+			slog("Invalid background %s", background->get_string(background));
+			map_free();
+			return;
+		}
+	}
+	{
 		SJson *end = sj_object_get_value(g_map, "end");
 		if(!end) {
 			g_end = INFINITY;
@@ -330,6 +345,7 @@ void map_free() {
 		g_enemy_spawns = NULL;
 	}
 	g_song_filename = NULL;
+	g_background_filename = NULL;
 	set_bpm(0.0);
 }
 

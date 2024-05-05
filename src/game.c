@@ -84,6 +84,7 @@ int main(int argc, char *argv[])
 
 		gf2d_graphics_clear_screen();// clears drawing buffers
 
+		ui_predraw();
 		run_physics_frame();
 		ui_frame();
 
@@ -115,7 +116,7 @@ void run_physics_frame() {
 		physics_world = rollback_step(&g_rollback, 0.016);
 	}
 
-	physics_debug_draw(physics_world);
+	//physics_debug_draw(physics_world);
 	physics_draw_sprites(physics_world);
 }
 
