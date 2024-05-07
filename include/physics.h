@@ -103,11 +103,13 @@ typedef struct PhysicsWorld_S {
 	unsigned int max_physics_bodies;
 	unsigned int last_allocated_body;
 	float gravity;
-	Uint8 * keys;
-	Uint32 prev_mouse_buttons;
+	Uint8 *keys;
+	float *midi_cc;
+	float *midi_note;
 	Uint32 mouse_buttons;
 	int mouse_x, mouse_y;
 	float jump_velocity;
+	struct PhysicsWorld_S *prev;
 } PhysicsWorld;
 
 PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate);

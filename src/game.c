@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <porttime.h>
 #include "simple_logger.h"
 
 #include "gf2d_graphics.h"
@@ -11,6 +12,8 @@
 #include "main_menu.h"
 #include "points.h"
 #include "save.h"
+#include "rebind.h"
+#include "midi.h"
 
 Rollback g_rollback;
 
@@ -33,6 +36,7 @@ int main(int argc, char *argv[])
 	/*program initializtion*/
 	init_logger("gf2d.log",0);
 	slog("---==== BEGIN ====---");
+	Pt_Start(1, NULL, NULL);
 	gf2d_graphics_initialize(
 		"gf2d",
 		1200,
@@ -49,6 +53,7 @@ int main(int argc, char *argv[])
 	init_audio();
 	font_init();
 	load();
+	load_bindings();
 
 	// physics setup
 	g_rollback = init_rollback(1000, 15);
@@ -78,6 +83,7 @@ int main(int argc, char *argv[])
 		}
 		int num_keys;
 		g_keys = SDL_GetKeyboardState(&num_keys); // get the keyboard state for this frame
+		midi_poll();
 		/*update things here*/
 
 		g_mouse_buttons = SDL_GetMouseState(&g_mouse_x, &g_mouse_y);
@@ -98,6 +104,9 @@ int main(int argc, char *argv[])
 	}
 	free_rollback(&g_rollback);
 	save();
+	save_bindings();
+	free_bindings();
+	midi_end();
 	slog("---==== END ====---");
 	return 0;
 }
@@ -106,11 +115,6 @@ void run_physics_frame() {
 	audio_tick(0.016);
 
 	PhysicsWorld *physics_world = rollback_cur_physics(&g_rollback);
-
-	physics_world->mouse_x = g_mouse_x;
-	physics_world->mouse_y = g_mouse_y;
-	physics_world->prev_mouse_buttons = g_prev_mouse_buttons;
-	physics_world->mouse_buttons = g_mouse_buttons;
 
 	if(!g_paused) {
 		physics_world = rollback_step(&g_rollback, 0.016);

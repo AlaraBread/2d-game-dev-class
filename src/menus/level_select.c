@@ -1,4 +1,5 @@
 #include <dirent.h>
+#include "gfc_list.h"
 #include "simple_json.h"
 #include "simple_logger.h"
 #include "rollback.h"
@@ -30,13 +31,13 @@ void draw_map_button(UIElement *map_button) {
 }
 
 static int map_idx;
-void list_map(char filename[256]) {
+UIElement *list_map(char filename[256]) {
 	char full_path[512] = "./sound/maps/";
 	strcat(full_path, filename);
 	SJson *file = sj_load(full_path);
 	if(!file) {
 		slog("Failed to list %s", full_path);
-		return;
+		return NULL;
 	}
 	const char *title = sj_get_string_value(sj_object_get_value(file, "title"));
 	int high_score;
@@ -53,14 +54,18 @@ void list_map(char filename[256]) {
 
 	sj_free(file);
 	map_idx++;
+
+	return button;
 }
 
+extern UIElement *g_focus;
 void level_select() {
 	PhysicsWorld *world = rollback_cur_physics(&g_rollback);
 	physics_clear_bodies(world);
 	clear_ui_elements();
 	map_idx = 0;
 
+	List *buttons = gfc_list_new();
 	DIR *dp;
 	struct dirent *ep;
 	dp = opendir("./sound/maps");
@@ -69,7 +74,8 @@ void level_select() {
 			if(strcmp("..", ep->d_name) == 0 || strcmp(".", ep->d_name) == 0) {
 				continue;
 			}
-			list_map(ep->d_name);
+			UIElement *button = list_map(ep->d_name);
+			if(button) gfc_list_append(buttons, button);
 		}
 		(void) closedir(dp);
 	} else {
@@ -78,4 +84,7 @@ void level_select() {
 
 	UIElement *back_button = create_button(vector2d(1200/2, 720-100), vector2d(300, 100), "Back");
 	back_button->click = back_button_clicked;
+
+	setup_list(buttons, back_button, back_button);
+	gfc_list_delete(buttons);
 }

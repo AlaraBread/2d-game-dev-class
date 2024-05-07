@@ -1,9 +1,10 @@
+#ifndef __ALARA_UI_ELEMENT__
+#define __ALARA_UI_ELEMENT__
+
 #include "gfc_types.h"
 #include "gf2d_sprite.h"
 #include "font.h"
-
-#ifndef __ALARA_UI_ELEMENT__
-#define __ALARA_UI_ELEMENT__
+#include "gfc_list.h"
 
 #define MAX_ENTITY_SPRITES 3
 
@@ -29,6 +30,10 @@ typedef struct UIElement_S {
 	unsigned int timer;
 	unsigned int total_timer;
 	Sprite *sprite;
+	int input_action;
+	Vector2D click_start_position;
+	struct UIElement_S *next;
+	struct UIElement_S *prev;
 	void (*think)(struct UIElement_S *self);
 	void (*update)(struct UIElement_S *self);
 	void (*predraw)(struct UIElement_S *self);
@@ -57,5 +62,6 @@ UIElement *create_button(Vector2D position, Vector2D size, const char *text);
 UIElement *create_label(Vector2D position, TextAlign text_align_x, TextAlign text_align_y);
 void ui_frame();
 void ui_predraw();
+void setup_list(List *list, UIElement *before, UIElement *after);
 
 #endif

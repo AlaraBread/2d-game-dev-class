@@ -52,11 +52,16 @@ void mods() {
 	UIElement *back_button = create_button(vector2d(1200/2, 720-100), vector2d(300, 100), "back");
 	back_button->click = back_button_clicked;
 
+	List *buttons = gfc_list_new();
+
 	for(int i = 0; i < NUM_MODS; i++) {
 		UIElement *mod_button = create_button(vector2d(1200/2, 100+i*(75+20)), vector2d(400, 75), g_mod_names[i]);
 		mod_button->font_size = 2;
 		mod_button->draw = draw_mod_button;
 		mod_button->index = i;
 		mod_button->click = mod_button_clicked;
+		gfc_list_append(buttons, mod_button);
 	}
+	setup_list(buttons, back_button, back_button);
+	gfc_list_delete(buttons);
 }

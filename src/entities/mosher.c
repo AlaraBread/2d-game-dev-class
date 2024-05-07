@@ -9,6 +9,7 @@
 #include "dance_floor.h"
 #include "map.h"
 #include "mods.h"
+#include "rebind.h"
 
 // https://stackoverflow.com/questions/4633177/how-to-wrap-a-float-to-the-interval-pi-pi
 // answer by Tim Čas
@@ -266,7 +267,7 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	// fart/vaccum powerup
 	if((g_selected_powerup == FART || g_selected_powerup == VACCUM) &&
 			body->cooldown <= 0.0 &&
-			(world->mouse_buttons&SDL_BUTTON(3)) && !(world->prev_mouse_buttons&SDL_BUTTON(3))) {
+			is_action_just_pressed(world, POWERUP)) {
 		body->cooldown = 5.0;
 		for(int i = 0; i < world->max_physics_bodies; i++) {
 			PhysicsBody *e = &world->physics_bodies[i];
@@ -295,7 +296,7 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		return;
 	}
 
-	if(!(world->mouse_buttons&SDL_BUTTON(1) && !world->prev_mouse_buttons&SDL_BUTTON(1))) {
+	if(!is_action_just_pressed(world, JUMP)) {
 		body->physics_material.bounce = get_mosher_bounce(body);
 		return;
 	}
@@ -352,7 +353,12 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 	vector2d_add(pos, body->position, vector2d(0.0, -200.0));
 	init_tmp_text(t, c, pos, color);
 
-	vector2d_sub(impulse, vector2d(world->mouse_x, 0.0), body->position);
+	Binding binding = get_binding(DIRECTION);
+	if(binding.type == MOUSE_MOTION) {
+		vector2d_sub(impulse, vector2d(world->mouse_x, 0.0), body->position);
+	} else {
+		impulse.x = (get_axis_binding_value(world, binding)-0.5) * 1000;
+	}
 	Vector2D collision_point;
 	vector2d_add(collision_point, body->position, vector2d_rotate(body->center_of_mass, body->rotation));
 	impulse.x = impulse.x*body->mass;

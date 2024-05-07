@@ -3,10 +3,12 @@
 #include "font.h"
 #include "util.h"
 #include "ui_element.h"
+#include "rebind.h"
 
 unsigned int g_max_ui_elements;
 unsigned int g_last_allocated_ui_element;
 UIElement *g_ui_elements;
+UIElement *g_focus = NULL;
 
 void free_ui_system();
 
@@ -86,6 +88,9 @@ void ui_element_mouse_events(UIElement *element) {
 	}
 
 	if(element->mouse_enter && is_in_rect && !was_in_rect) {
+		if(element->click) {
+			g_focus = element;
+		}
 		element->mouse_enter(element);
 	}
 	if(element->mouse_exit && !is_in_rect && was_in_rect) {
@@ -125,12 +130,24 @@ void ui_predraw() {
 }
 
 void ui_frame() {
+	if(g_focus) {
+		if(global_is_action_just_pressed(UI_NEXT)) {
+			g_focus = g_focus->next;
+		}
+		if(global_is_action_just_pressed(UI_PREV)) {
+			g_focus = g_focus->prev;
+		}
+	}
 	for(int i = 0; i < g_max_ui_elements; i++) {
 		UIElement *element = &g_ui_elements[i];
 		if(!element->inuse) {
 			continue;
 		}
 		ui_element_mouse_events(element);
+		if(element == g_focus && global_is_action_just_pressed(UI_ACCEPT) && g_focus->click) {
+			g_focus->click(g_focus);
+			break;
+		}
 		if(element->think) {
 			element->think(element);
 		}
@@ -177,6 +194,12 @@ void button_mouse_up(UIElement *button) {
 }
 
 void draw_text_rect(UIElement *element) {
+	if(g_focus == element) {
+		const int focus_padding = 4;
+		Rect focus_rect = gfc_rect(element->position.x-focus_padding, element->position.y-focus_padding,
+				element->size.x+focus_padding*2, element->size.y+focus_padding*2);
+		gf2d_draw_rect_filled(focus_rect, gfc_color(1.0, 0.2, 0.0, 1.0));
+	}
 	Rect rect = gfc_rect(element->position.x, element->position.y, element->size.x, element->size.y);
 	gf2d_draw_rect_filled(rect, element->bg_color);
 	gf2d_draw_rect(rect, element->border_color);
@@ -215,4 +238,33 @@ UIElement *create_button(Vector2D position, Vector2D size, const char *text) {
 	button->text_align_y = CENTER;
 	memcpy(button->text, text, sizeof(char)*(strlen(text)+1));
 	return button;
+}
+
+void setup_list(List *list, UIElement *before, UIElement *after) {
+	int num_buttons = gfc_list_get_count(list);
+	UIElement *prev = NULL;
+	for(int i = 0; i < num_buttons; i++) {
+		UIElement *button = (UIElement *)gfc_list_get_nth(list, i);
+		button->prev = prev;
+		prev = button;
+	}
+	prev = NULL;
+	for(int i = num_buttons-1; i >= 0; i--) {
+		UIElement *button = (UIElement *)gfc_list_get_nth(list, i);
+		button->next = prev;
+		prev = button;
+	}
+
+	if(num_buttons == 0) {
+		g_focus = before;
+		if(before) before->next = after;
+		if(after) after->prev = before;
+	} else {
+		UIElement *last = gfc_list_get_nth(list, num_buttons-1);
+		g_focus = gfc_list_get_nth(list, 0);
+		g_focus->prev = before;
+		if(before) before->next = g_focus;
+		last->next = after;
+		if(after) after->prev = last;
+	}
 }

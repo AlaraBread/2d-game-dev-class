@@ -505,9 +505,13 @@ PhysicsWorld init_physics(unsigned int max_physics_bodies, Bool allocate) {
 	if(allocate) {
 		world.physics_bodies = calloc(sizeof(PhysicsBody), max_physics_bodies);
 		world.keys = calloc(sizeof(Uint8), SDL_NUM_SCANCODES);
+		world.midi_cc = calloc(sizeof(float), 129);
+		world.midi_note = calloc(sizeof(float), 128);
 	} else {
 		world.physics_bodies = NULL;
 		world.keys = NULL;
+		world.midi_cc = NULL;
+		world.midi_note = NULL;
 	}
 	world.last_allocated_body = max_physics_bodies-1;
 	world.floor_idx = -1;
@@ -534,23 +538,27 @@ void free_physics(PhysicsWorld *world) {
 void physics_copy(PhysicsWorld *from, PhysicsWorld *to) {
 	PhysicsBody *physics_bodies = to->physics_bodies;
 	Uint8 *keys = to->keys;
+	float *midi_cc = to->midi_cc;
+	float *midi_note = to->midi_note;
+	PhysicsWorld *prev = to->prev;
+
 	memcpy(to, from, sizeof(PhysicsWorld));
-	if(physics_bodies == NULL) {
-		physics_bodies = calloc(sizeof(PhysicsBody), from->max_physics_bodies);
-		to->physics_bodies = physics_bodies;
-	}
-	if(keys == NULL) {
-		keys = calloc(sizeof(Uint8), SDL_NUM_SCANCODES);
-		to->keys = keys;
-	}
-	if(from->physics_bodies) {
-		memcpy(physics_bodies, from->physics_bodies, sizeof(PhysicsBody)*from->max_physics_bodies);
-	}
-	if(from->keys) {
-		memcpy(keys, from->keys, sizeof(Uint8)*SDL_NUM_SCANCODES);
-	}
+
+	if(physics_bodies == NULL) physics_bodies = calloc(sizeof(PhysicsBody), from->max_physics_bodies);
+	if(keys == NULL) keys = calloc(sizeof(Uint8), SDL_NUM_SCANCODES);
+	if(midi_cc == NULL) midi_cc = calloc(sizeof(float), 129);
+	if(midi_note == NULL) midi_note = calloc(sizeof(float), 128);
+
+	if(from->physics_bodies) memcpy(physics_bodies, from->physics_bodies, sizeof(PhysicsBody)*from->max_physics_bodies);
+	if(from->keys) memcpy(keys, from->keys, sizeof(Uint8)*SDL_NUM_SCANCODES);
+	if(from->midi_cc) memcpy(midi_cc, from->midi_cc, sizeof(float)*129);
+	if(from->midi_note) memcpy(midi_note, from->midi_note, sizeof(float)*128);
+
 	to->keys = keys;
+	to->midi_cc = midi_cc;
+	to->midi_note = midi_note;
 	to->physics_bodies = physics_bodies;
+	to->prev = prev;
 }
 
 PhysicsBody *allocate_physics_body(PhysicsWorld *world) {

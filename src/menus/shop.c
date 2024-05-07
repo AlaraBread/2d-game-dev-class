@@ -59,6 +59,7 @@ void shop() {
 	UIElement *back_button = create_button(vector2d(1200/2, 720-100), vector2d(300, 100), "back");
 	back_button->click = back_button_clicked;
 
+	List *buttons = gfc_list_new();
 	for(int i = 0; i < NUM_POWERUPS; i++) {
 		UIElement *powerup_button = create_button(vector2d(1200/2, 100+i*(75+20)), vector2d(500, 75), g_powerup_names[i]);
 		powerup_button->text_align_x = START;
@@ -67,6 +68,10 @@ void shop() {
 		powerup_button->index = i;
 		powerup_button->click = powerup_button_clicked;
 		update_powerup(powerup_button);
+		gfc_list_append(buttons, powerup_button);
 	}
 	g_points_label = create_points_label();
+
+	setup_list(buttons, back_button, back_button);
+	gfc_list_delete(buttons);
 }

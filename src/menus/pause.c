@@ -21,6 +21,7 @@ static void restart_clicked(UIElement *restart_button) {
 	dance_floor(g_map_filename);
 }
 
+extern UIElement *g_focus;
 void create_pause_menu() {
 	UIElement *tint = allocate_ui_element();
 	tint->draw = draw_text_rect;
@@ -44,6 +45,15 @@ void create_pause_menu() {
 	UIElement *unpause_button = create_button(vector2d(1200/2, 300+120*2), vector2d(500, 100), "unpause");
 	unpause_button->click = unpause_clicked;
 	unpause_button->group = UI_GROUP_PAUSE_MENU;
+
+	main_menu_button->next = restart_button;
+	main_menu_button->prev = unpause_button;
+	restart_button->next = unpause_button;
+	restart_button->prev = main_menu_button;
+	unpause_button->next = main_menu_button;
+	unpause_button->prev = restart_button;
+
+	g_focus = unpause_button;
 }
 
 void remove_pause_menu() {

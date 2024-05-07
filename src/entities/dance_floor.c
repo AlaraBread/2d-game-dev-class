@@ -15,6 +15,7 @@
 #include "pause.h"
 #include "mods.h"
 #include "dance_floor.h"
+#include "rebind.h"
 
 extern Rollback g_rollback;
 
@@ -82,8 +83,6 @@ double get_beat_interval(double *beats, List *nearby_beats, double beat_time) {
 	return INFINITY;
 }
 
-extern const Uint8 *g_keys;
-extern Uint8 g_prev_keys[SDL_NUM_SCANCODES];
 extern Bool g_paused;
 extern int g_game_state;
 
@@ -115,8 +114,7 @@ void dance_floor_think(UIElement *element) {
 	}
 	physics->jump_velocity = speed*g_jump_velocity;
 
-	if((g_keys[SDL_SCANCODE_P] && !g_prev_keys[SDL_SCANCODE_P]) ||
-			(g_keys[SDL_SCANCODE_ESCAPE] && !g_prev_keys[SDL_SCANCODE_ESCAPE])) {
+	if(global_is_action_just_pressed(PAUSE)) {
 		toggle_paused();
 	}
 }

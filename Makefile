@@ -7,6 +7,7 @@ all:
 	@${MAKE} -C ./gfc/simple_logger/src
 	@${MAKE} -C ./gfc/simple_logger/src static
 	@${MAKE} -C ./soloud/build/gmake
+	@${MAKE} -C ./portmidi/
 	@${MAKE} -C ./src
 
 run:

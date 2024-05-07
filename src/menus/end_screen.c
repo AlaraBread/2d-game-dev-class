@@ -23,6 +23,7 @@ static void replay_clicked(UIElement *replay_button) {
 }
 
 extern Rollback g_rollback;
+extern UIElement *g_focus;
 void create_end_screen() {
 	set_paused(false);
 
@@ -48,6 +49,13 @@ void create_end_screen() {
 	UIElement *main_menu_button = create_button(vector2d(1200/2, 720-100/2-20), vector2d(500, 100), "main menu");
 	main_menu_button->click = main_menu_clicked;
 	main_menu_button->group = UI_GROUP_END_MENU;
+
+	replay_button->next = main_menu_button;
+	replay_button->prev = main_menu_button;
+	main_menu_button->next = replay_button;
+	main_menu_button->prev = replay_button;
+
+	g_focus = replay_button;
 }
 
 void remove_end_screen() {

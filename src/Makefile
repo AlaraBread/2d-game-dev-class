@@ -13,10 +13,10 @@
 PROJECT = moshing_simulator
 CC      = gcc
 
-LIB_LIST = ../gfc/libs/libgfc.a ../gfc/simple_json/libs/libsj.a ../gfc/simple_logger/libs/libsl.a ../soloud/lib/libsoloud_static.a
+LIB_LIST = ../gfc/libs/libgfc.a ../gfc/simple_json/libs/libsj.a ../portmidi/libportmidi-static.a ../gfc/simple_logger/libs/libsl.a ../soloud/lib/libsoloud_static.a
 OBJECTS = $(patsubst %.c,%.o,$(shell find . -name "*.c")) ../soloud/src/c_api/soloud_c.o
 
-INC_PATHS = ../include ../gfc/include ../gfc/simple_logger/include ../gfc/simple_json/include ../soloud/include
+INC_PATHS = ../include ../gfc/include ../gfc/simple_logger/include ../gfc/simple_json/include ../soloud/include ../portmidi/pm_common ../portmidi/porttime
 INC_PARAMS =$(foreach d, $(INC_PATHS), -I$d)
 
 SDL_CFLAGS = `sdl2-config --cflags` $(INC_PARAMS)
