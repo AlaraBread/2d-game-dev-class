@@ -3,7 +3,7 @@
 #include "pause.h"
 #include "dance_floor.h"
 #include "main_menu.h"
-#include "audio.h"
+#include "music.h"
 
 extern int g_game_state;
 

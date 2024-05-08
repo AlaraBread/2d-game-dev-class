@@ -1,7 +1,8 @@
+#include <simple_logger.h>
 #include "gfc_types.h"
 #include "physics.h"
 #include "mosher.h"
-#include "audio.h"
+#include "music.h"
 #include "tmp_text.h"
 #include "gfc_list.h"
 #include "shop.h"
@@ -10,17 +11,18 @@
 #include "map.h"
 #include "mods.h"
 #include "rebind.h"
+#include "particles.h"
 
 // https://stackoverflow.com/questions/4633177/how-to-wrap-a-float-to-the-interval-pi-pi
 // answer by Tim Čas
 /* wrap x -> [0,max) */
-double wrapMax(double x, double max)
+static double wrapMax(double x, double max)
 {
     /* integer math: `(max + x % max) % max` */
     return fmod(max + fmod(x, max), max);
 }
 /* wrap x -> [min,max) */
-double wrapMinMax(double x, double min, double max)
+static double wrapMinMax(double x, double min, double max)
 {
     return min + wrapMax(x - min, max - min);
 }
@@ -112,6 +114,11 @@ PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 		player->mass *= 0.75;
 		player->shape.capsule.height *= 2;
 		player->shape.capsule.radius *= 0.75;
+		player->sprite = gf2d_sprite_load_image("images/tall_player.png");
+	} else if(g_selected_powerup == FART || g_selected_powerup == VACCUM) {
+		player->sprite = gf2d_sprite_load_image("images/player_powerup.png");
+	} else {
+		player->sprite = gf2d_sprite_load_image("images/player.png");
 	}
 	float l = player->shape.capsule.height+player->shape.capsule.radius*2.0;
 	player->moment_of_inertia = player->mass*l*l/3.0;
@@ -123,7 +130,6 @@ PhysicsBody *init_player_mosher(PhysicsWorld *world) {
 	player->update = player_update;
 	player->mask = 1;
 	player->layer = 1;
-	player->sprite = gf2d_sprite_load_image("images/player.png");
 	player->sprite_offset = vector2d(-player->shape.capsule.radius, -player->shape.capsule.height/2-player->shape.capsule.radius);
 	world->player_idx = physics_get_body_id(world, player);
 	if(g_selected_powerup == STRONG_LEGS) {
@@ -252,6 +258,15 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 		return;
 	}
 
+	for(int i = 0; i < MAX_REPORTED_COLLISIONS; i++) {
+		Collision col = body->collisions[i];
+		if(!col.hit) continue;
+		if(vector2d_magnitude_compare(col.rel_velocity, 100) == -1) continue;
+		if(world->floor_idx == col.a_idx || world->floor_idx == col.b_idx) {
+			hit_floor(col.position);
+		}
+	}
+
 	double beat_time = get_beat_time();
 
 	// check for a missed beat
@@ -269,6 +284,8 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 			body->cooldown <= 0.0 &&
 			is_action_just_pressed(world, POWERUP)) {
 		body->cooldown = 5.0;
+		gf2d_sprite_free(body->sprite);
+		body->sprite = gf2d_sprite_load_image("images/player.png");
 		for(int i = 0; i < world->max_physics_bodies; i++) {
 			PhysicsBody *e = &world->physics_bodies[i];
 			if(!e->inuse || !(e->tags & TAG_ENEMY)) {
@@ -286,7 +303,14 @@ void player_update(PhysicsBody *body, PhysicsWorld *world, float delta) {
 			apply_central_impulse(e, impulse);
 		}
 	}
-	body->cooldown = SDL_max(body->cooldown-delta, 0.0);
+	float new_cooldown = SDL_max(body->cooldown-delta, 0.0);
+	if(new_cooldown <= 0 && body->cooldown > 0) {
+		if(g_selected_powerup == FART || g_selected_powerup == VACCUM) {
+			gf2d_sprite_free(body->sprite);
+			body->sprite = gf2d_sprite_load_image("images/player_powerup.png");
+		}
+	}
+	body->cooldown = new_cooldown;
 
 	Vector2D impulse;
 

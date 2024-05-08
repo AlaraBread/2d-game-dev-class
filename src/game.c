@@ -5,7 +5,7 @@
 #include "gf2d_graphics.h"
 #include "gf2d_sprite.h"
 #include "rollback.h"
-#include "audio.h"
+#include "music.h"
 #include "mosher.h"
 #include "font.h"
 #include "ui_element.h"
@@ -14,6 +14,7 @@
 #include "save.h"
 #include "rebind.h"
 #include "midi.h"
+#include "particles.h"
 
 Rollback g_rollback;
 
@@ -51,6 +52,7 @@ int main(int argc, char *argv[])
 
 	init_ui_system(500);
 	init_audio();
+	init_particles();
 	font_init();
 	load();
 	load_bindings();
@@ -92,6 +94,8 @@ int main(int argc, char *argv[])
 
 		ui_predraw();
 		run_physics_frame();
+		update_particles(0.016);
+		draw_particles();
 		ui_frame();
 
 		g_prev_mouse_buttons = g_mouse_buttons;

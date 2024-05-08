@@ -4,6 +4,7 @@
 #include "util.h"
 #include "ui_element.h"
 #include "rebind.h"
+#include "sfx.h"
 
 unsigned int g_max_ui_elements;
 unsigned int g_last_allocated_ui_element;
@@ -112,6 +113,7 @@ void ui_element_mouse_events(UIElement *element) {
 			element->mouse_up(element);
 		}
 		if(element->click) {
+			play_click();
 			element->click(element);
 		}
 	}
@@ -145,6 +147,7 @@ void ui_frame() {
 		}
 		ui_element_mouse_events(element);
 		if(element == g_focus && global_is_action_just_pressed(UI_ACCEPT) && g_focus->click) {
+			play_click();
 			g_focus->click(g_focus);
 			break;
 		}
@@ -266,5 +269,9 @@ void setup_list(List *list, UIElement *before, UIElement *after) {
 		if(before) before->next = g_focus;
 		last->next = after;
 		if(after) after->prev = last;
+		if(!before && !after) {
+			g_focus->prev = last;
+			last->next = g_focus;
+		}
 	}
 }

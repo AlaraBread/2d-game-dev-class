@@ -5,7 +5,7 @@
 #include "gfc_vector.h"
 #include "gfc_list.h"
 #include "map.h"
-#include "audio.h"
+#include "music.h"
 #include "mods.h"
 
 SJson *g_map = NULL;

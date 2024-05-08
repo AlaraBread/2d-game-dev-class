@@ -367,6 +367,11 @@ void solve_collision(PhysicsWorld *world, PhysicsBody *a, PhysicsBody *b, float 
 	if(a->physics_type == TRIGGER || b->physics_type == TRIGGER) {
 		return;
 	}
+	Vector2D a_v = velocity_at_point(a, col.position);
+	Vector2D b_v = velocity_at_point(b, col.position);
+	Vector2D dv;
+	vector2d_sub(dv, a_v, b_v);
+	col.rel_velocity = dv;
 	if(!simple) {
 		for(int i = 0; i < MAX_REPORTED_COLLISIONS; i++) {
 			if(!a->collisions[i].hit) {
@@ -404,10 +409,6 @@ void solve_collision(PhysicsWorld *world, PhysicsBody *a, PhysicsBody *b, float 
 	float tangent_mass = nt_mass.y;
 
 	Vector2D tangent = vector2d_rotate(col.normal, M_PI/2.0);
-	Vector2D a_v = velocity_at_point(a, col.position);
-	Vector2D b_v = velocity_at_point(b, col.position);
-	Vector2D dv;
-	vector2d_sub(dv, a_v, b_v);
 	float dvn = vector2d_dot_product(col.normal, dv);
 	float dvt = vector2d_dot_product(tangent, dv);
 

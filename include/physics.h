@@ -5,7 +5,7 @@
 #ifndef __ALARA_PHYSICS__
 #define __ALARA_PHYSICS__
 
-#define MAX_REPORTED_COLLISIONS 1
+#define MAX_REPORTED_COLLISIONS 4
 
 typedef struct CapsuleShape {
 	float radius;
@@ -50,6 +50,7 @@ typedef struct Collision {
 	Bool hit;
 	int a_idx;
 	int b_idx;
+	Vector2D rel_velocity;
 } Collision;
 
 // for PhysicsBody.type

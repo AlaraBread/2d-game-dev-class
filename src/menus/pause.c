@@ -1,6 +1,6 @@
 #include "gfc_types.h"
 #include "ui_element.h"
-#include "audio.h"
+#include "music.h"
 #include "pause.h"
 #include "main_menu.h"
 #include "dance_floor.h"

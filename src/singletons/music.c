@@ -3,7 +3,7 @@
 #include "gfc_types.h"
 #include "rollback.h"
 #include "soloud_c.h"
-#include "audio.h"
+#include "music.h"
 
 double g_beat_interval = 0.0;
 double g_bpm = 0.0;
@@ -60,11 +60,11 @@ void play_music() {
 	}
 	g_music = WavStream_create();
 	if(!g_music) {
-		slog("Failed to load music\n");
+		slog("Failed to load music");
 		return;
 	}
 	if(WavStream_load(g_music, g_song_filename)) {
-		slog("Failed to load music\n");
+		slog("Failed to load music");
 		return;
 	}
 	WavStream_setLooping(g_music, 0);
